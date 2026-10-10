@@ -1,0 +1,11 @@
+# MongoDB only. Node runs on your machine, not in Docker (see PLAN.md).
+services:
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"          # your laptop's port : the container's port
+    volumes:
+      - mongo-data:/data/db    # keeps the data when the container is removed
+
+volumes:
+  mongo-data:
