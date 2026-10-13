@@ -26,7 +26,7 @@ function Showcase() {
   const img = 'absolute inset-0 size-full object-cover';
   return (
     <figure className="hidden flex-col gap-3 self-start pt-[14vh] pb-16 lg:flex">
-      <div className="relative aspect-[3/4] h-[64vh] max-h-[720px] overflow-hidden rounded-lg bg-surface photo-edge">
+      <div className="relative aspect-3/4 h-[64vh] max-h-180 overflow-hidden rounded-lg bg-surface photo-edge">
         <img
           src="/sample.jpg"
           width="900"
