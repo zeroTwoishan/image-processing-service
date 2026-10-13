@@ -7,6 +7,10 @@ export default defineConfig({
       NODE_ENV: 'test',
       MONGO_URI: 'mongodb://localhost:27017/image-processing-test',
       JWT_SECRET: 'test-only-secret-not-used-anywhere-real',
+      // Tests check that hashing works, not that it's slow; cost 12 would make the suite flaky on a busy laptop.
+      BCRYPT_COST: '4',
     },
+    // Test files share one database and clear it before each test, so run them one at a time.
+    fileParallelism: false,
   },
 });

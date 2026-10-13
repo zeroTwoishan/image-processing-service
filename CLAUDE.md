@@ -100,6 +100,6 @@ Run from the repo root unless noted. Docker Desktop must be running for the Mong
 
 ## Current status
 
-- Phase 0 is built and every Done-when check passes. Phase 1 has not started.
+- Phases 0 and 1 are done (Done-when passed). Phase 1 pages have plain placeholder styling; a Claude Design restyle (Darkroom direction, tokens in PLAN.md UI references) is in progress. Phase 2a has not started.
 - The project stays in `Projects/` (inside OneDrive) with Ishan's other projects. If `npm install` fails with `EPERM`/`EBUSY`, pause OneDrive sync and retry.
 - No open items left in PLAN.md.

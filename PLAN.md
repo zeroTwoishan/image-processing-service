@@ -200,7 +200,18 @@ The app has five pages. Gallery and Image Detail sit behind a login guard. The 7
 
 **User flow:** register → land on Gallery → upload → open an original → adjust the transforms → Apply → the new version appears under the original and you can download it.
 
-**UI reference:** [Originkit](https://www.originkit.dev/), a free library of animated React components you copy as code. Use it for ideas or pieces such as the upload area, gallery grid and a before/after slider. Before copying one, check its license and what it depends on (some are built for Framer), then restyle it with Tailwind so the app looks consistent.
+**UI references.** Take patterns and feel from these, not assets: borrow a layout idea or an interaction, and check the license before reusing anyone's component code.
+
+| Reference | What to take from it | Where it applies |
+| --- | --- | --- |
+| [Originkit](https://www.originkit.dev/) | Free animated React components you copy as code (some are built for Framer, so check dependencies); restyle with Tailwind | Upload area, gallery grid, before/after slider |
+| [shwn.design](https://shwn.design) | Quiet, near-empty pages and tactile, physical-feeling controls | Login/Register tone; rotate as a dial that snaps to 0/90/180/270, quality as a notched slider |
+| [bencho.dev](https://bencho.dev) | React micro-interactions (slide to confirm, tilt card) | Slide-to-confirm delete (Phase 6), subtle hover tilt on gallery cards |
+| [motion.dev](https://motion.dev) | Motion, the React animation library; `LazyMotion` + `m` components keep the bundle small | Exit animations CSS can't do (toasts, a new version entering the list). A new package, so decide in Phase 3 or 6 |
+| [dribbble.com](https://dribbble.com) | Shots for "photo editor dark UI", "image editing app", "lightroom redesign" | Pick 2–3 target shots before restyling |
+| [designbookmark.com](https://designbookmark.com) | Its Color Review tool | Contrast checks for the dark theme |
+
+**Icons:** [Phosphor](https://phosphoricons.com) (`@phosphor-icons/react`, MIT), imported by name with the `Icon` suffix; `regular` weight for controls, `duotone` for empty states, the upload zone and the 404.
 
 ## Build phases
 
@@ -209,7 +220,7 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order. Each o
 ### Phase 0: Setup
 
 - [x] `git init`; repo with `server/`, `client/`, `.gitignore` and `.env.example`, plus a root `package.json` using concurrently so `npm run dev` starts both
-- [ ] Commit `PLAN.md`, `CLAUDE.md` and `CHANGELOG.md` at the repo root
+- [x] Commit `PLAN.md`, `CLAUDE.md` and `CHANGELOG.md` at the repo root
 - [x] `config/env.js` validates every env var with Zod at boot; a missing `JWT_SECRET` or `MONGO_URI` stops the process with a clear message
 - [x] `app.js` exports `createApp()`, which builds a fresh Express app every time it's called (rate limiters are created inside it too, so each test file starts with clean counters)
 - [x] Express app with helmet (`crossOriginResourcePolicy: { policy: 'cross-origin' }`, so images from `/uploads` still load on another origin), cors, JSON parsing, a 404 handler, and an error handler that always returns `{ error: { code, message } }`
@@ -223,13 +234,13 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order. Each o
 
 ### Phase 1: Auth
 
-- [ ] User model with a bcrypt hash; the password never appears in JSON; `toJSON` maps `_id` → `id` and drops `__v`; `username` is stored trimmed and lowercase with a unique index (see Account rules)
-- [ ] `POST /register`, `POST /login`, `GET /me`, JWT middleware (7-day tokens), Zod validation
-- [ ] Rate limits on `/login` and `/register` (for example 5 per minute per IP; express-rate-limit with its in-memory store)
-- [ ] Error codes `VALIDATION_FAILED`, `UNAUTHORIZED`, `USERNAME_TAKEN`, `RATE_LIMITED`
-- [ ] Frontend: `api.js`, `AuthContext`, Login and Register pages, `ProtectedRoute`, Navbar
-- [ ] Zod: password 8–72 bytes (`Buffer.byteLength`), username 3–30 of letters, numbers, `_`
-- [ ] Tests: register, duplicate username (`Ishan` after `ishan` gives 409), a 73-byte password gives 400, login success and failure, `/me` with and without a token, the rate limit
+- [x] User model with a bcrypt hash; the password never appears in JSON; `toJSON` maps `_id` → `id` and drops `__v`; `username` is stored trimmed and lowercase with a unique index (see Account rules)
+- [x] `POST /register`, `POST /login`, `GET /me`, JWT middleware (7-day tokens), Zod validation
+- [x] Rate limits on `/login` and `/register` (for example 5 per minute per IP; express-rate-limit with its in-memory store)
+- [x] Error codes `VALIDATION_FAILED`, `UNAUTHORIZED`, `USERNAME_TAKEN`, `RATE_LIMITED`
+- [x] Frontend: `api.js`, `AuthContext`, Login and Register pages, `ProtectedRoute`, Navbar
+- [x] Zod: password 8–72 bytes (`Buffer.byteLength`), username 3–30 of letters, numbers, `_`
+- [x] Tests: register, duplicate username (`Ishan` after `ishan` gives 409), a 73-byte password gives 400, login success and failure, `/me` with and without a token, the rate limit
 
 **Done when:** you can register in the UI, refresh and stay logged in, and see a clear error for a wrong password, and the auth API tests pass.
 

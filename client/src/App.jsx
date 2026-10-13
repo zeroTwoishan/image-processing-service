@@ -1,21 +1,35 @@
-import { useEffect, useState } from 'react';
+import { Outlet, Route, Routes } from 'react-router';
+import Navbar from './components/Navbar.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import Login from './pages/Login.jsx';
+import Register from './pages/Register.jsx';
+import Gallery from './pages/Gallery.jsx';
+import NotFound from './pages/NotFound.jsx';
 
-// Phase 0 placeholder: proves the Vite proxy reaches the API. Pages and routing arrive in Phase 1.
-export default function App() {
-  const [status, setStatus] = useState('checking...');
-
-  useEffect(() => {
-    fetch('/api/health/ready')
-      .then((res) => setStatus(res.ok ? 'ready' : 'database unavailable'))
-      .catch(() => setStatus('API not reachable'));
-  }, []);
-
+// Every page gets the navbar; <Outlet /> is where the matched page renders.
+function Layout() {
   return (
-    <main className="min-h-screen grid place-items-center bg-zinc-950 text-zinc-100">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-semibold">Image Processing Service</h1>
-        <p className="text-zinc-400">API: {status}</p>
-      </div>
-    </main>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <Navbar />
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        {/* Everything inside here needs a logged-in user */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<Gallery />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 }

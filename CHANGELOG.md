@@ -2,6 +2,13 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-13: UI references and icons
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Frontend | The single Originkit line became a "UI references" table (Originkit, shwn.design, bencho.dev, motion.dev, Dribbble, designbookmark.com), adapted from the portfolio project's plan |
+| 2 | Frontend | Icons: Phosphor (`@phosphor-icons/react`), regular weight for controls, duotone for big moments; installed when the restyle starts |
+
 ### 2026-10-10: Node 24
 
 | # | Section | Change |

@@ -6,6 +6,8 @@ const schema = z.object({
   MONGO_URI: z.string().min(1),
   // Anyone who knows this secret can forge a login token for any user, so it must be long and random.
   JWT_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  // bcrypt work factor: each +1 doubles the hashing time. 12 for real use; tests set 4 to stay fast.
+  BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
 });
 
 const result = schema.safeParse(process.env);
