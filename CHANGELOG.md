@@ -8,6 +8,9 @@
 | --- | --- | --- |
 | 1 | Build phases | New Phase 7 (after launch): guest mode. Try the editor without an account, nothing stored, stricter per-IP limit, sample photo, dismissible sign-up nudge after the first download |
 | 2 | Phase 4 | `cors` must expose `Retry-After` and the `RateLimit*` headers, or the countdown can't read them cross-origin |
+| 3 | Phase 2b | "Try with a sample photo" button in the empty gallery (client-side, through the normal upload) |
+| 4 | Phase 6 | README GIF; favicon and link-preview (`og:*`) tags with a 1200×630 `og.png` |
+| 5 | Phase 1 polish | Login and Register show a before/after sample photo on wide screens (≥1024px), so the first screen shows what the app does |
 
 ### 2026-10-13: UI references and icons
 

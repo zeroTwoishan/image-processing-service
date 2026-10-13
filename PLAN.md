@@ -266,6 +266,7 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 - [ ] `GET /images` (paginated), sorted by `{ createdAt: -1, _id: -1 }` so two images with the same timestamp never swap places between pages
 - [ ] `GET /images` and `GET /images/:id` hide anything past `expiresAt`, even before the cleanup job (Phase 5) has deleted it
 - [ ] Frontend: a thumbnail-only gallery grid, ImageCard with an "Expires in 5h 32m" countdown, Pagination
+- [ ] Empty gallery: a "Try with a sample photo" button next to the upload zone. The client fetches the bundled sample (`client/public`) and sends it through the normal `POST /images` upload, so there's no server change and a first-time user can try the editor straight away
 
 **Done when:** you upload 12+ images; the grid loads only thumbnails with an expiry countdown and pages correctly; an image with `expiresAt` in the past is hidden; tests cover pagination and hiding.
 
@@ -321,6 +322,8 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 - [ ] Fill any gaps in test coverage, and run the tests in CI with GitHub Actions (a `mongo` service container gives the tests their database)
 - [ ] Loading and empty states, toasts, a mobile layout
 - [ ] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete
+- [ ] A ~5-second GIF at the top of the README: upload → transform → before/after → download. Recruiters skim READMEs; the GIF shows the app working before they read a word
+- [ ] Favicon (SVG, plus a PNG fallback) and link-preview tags in `index.html`: `<meta name="description">`, `og:title`, `og:description`, `og:image` (a 1200×630 `og.png`) and `twitter:card`, so the live link shows a proper card on LinkedIn and in chats. Check it with a link-preview tester before sharing
 - [ ] Redeploy the finished app to the host chosen in Phase 4
 - [ ] Clean up local Docker once the project is done: `docker compose down -v` (removes the Mongo container and its data volume), `docker system prune -a` (removes downloaded images), then uninstall Docker Desktop if nothing else needs it
 
