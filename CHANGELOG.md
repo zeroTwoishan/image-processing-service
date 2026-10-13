@@ -2,6 +2,13 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-14: Guest mode, CORS headers
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Build phases | New Phase 7 (after launch): guest mode. Try the editor without an account, nothing stored, stricter per-IP limit, sample photo, dismissible sign-up nudge after the first download |
+| 2 | Phase 4 | `cors` must expose `Retry-After` and the `RateLimit*` headers, or the countdown can't read them cross-origin |
+
 ### 2026-10-13: UI references and icons
 
 | # | Section | Change |

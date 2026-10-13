@@ -116,6 +116,12 @@ describe('POST /api/login', () => {
     expect(wrongPassword.body.error.code).toBe('UNAUTHORIZED');
   });
 
+  it('a too-short password is just a wrong password (401), not a validation error', async () => {
+    const res = await login({ username: 'ishan', password: 'x' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHORIZED');
+  });
+
   it('still runs bcrypt for an unknown username (no timing leak)', async () => {
     const compare = vi.spyOn(bcrypt, 'compare');
     await login({ username: 'nobody', password: 'correct horse' });

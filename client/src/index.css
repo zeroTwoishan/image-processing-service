@@ -1,1 +1,117 @@
+/*
+ * Darkroom theme: the only CSS file. Copy it into your app as-is.
+ *
+ * Every token lives in the @theme block below and becomes a Tailwind v4
+ * utility (bg-canvas, text-fg-muted, border-line, outline-safelight,
+ * font-mono, rounded-md, max-w-page, ease-out …). Components never use raw
+ * hex values.
+ *
+ * Contrast ratios are WCAG 2.x against canvas / surface / raised.
+ *
+ * The safelight rule: the safelight is "do this". Only the primary button is a
+ * filled safelight shape. Everywhere else it is a thin line (focus ring,
+ * progress line), a small dot (something is developing) or text colour
+ * (expiry under 1 hour, pending-step marker).
+ */
 @import "tailwindcss";
+
+@theme {
+  /* ---- Fonts (loaded by one Google Fonts <link> in index.html) ---- */
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif; /* wordmark + page titles only */
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif; /* all UI text */
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* every number */
+
+  /* ---- Surfaces: warm charcoal, never #000 ---- */
+  --color-canvas: #141211;  /* page */
+  --color-surface: #1b1816; /* upload zone, panels, image stage */
+  --color-raised: #24201d;  /* inputs, hover fills, pressed toggles, skeletons */
+
+  /* ---- Lines ---- */
+  --color-line: #2e2925;         /* hairline separators */
+  --color-line-strong: #4a423b;  /* secondary button edges, rails */
+  --color-control-edge: #736960; /* form field edges: 3.5 / 3.3 / 3.0 (WCAG 1.4.11) */
+
+  /* ---- Text ---- */
+  --color-fg: #ede6dc;        /* 15.1 / 14.3 / 13.1 */
+  --color-fg-muted: #b0a699;  /*  7.8 /  7.4 /  6.7 */
+  --color-fg-subtle: #968c81; /*  5.7 /  5.4 /  4.9  captions, placeholders */
+
+  /* ---- The one accent: red-amber safelight ---- */
+  --color-safelight: #ff6b3d;       /* 6.6 / 6.2 / 5.7 */
+  --color-safelight-hover: #ff8259; /* primary button hover only */
+  --color-safelight-ink: #1f0d05;   /* text on the primary button: 6.6 */
+
+  /* ---- Errors: light rose, never mistaken for the accent; always with an icon ---- */
+  --color-danger: #ff94a0; /* 8.9 / 8.4 / 7.7 */
+
+  /* ---- Radii ---- */
+  --radius-sm: 4px;  /* markers, small chips */
+  --radius-md: 6px;  /* buttons, inputs, thumbnails */
+  --radius-lg: 10px; /* upload zone, panels, image stage */
+
+  /* ---- Spacing and layout ---- */
+  --spacing: 4px;            /* every p-*, gap-*, m-* is a multiple of 4px */
+  --container-page: 1280px;  /* max-w-page */
+  --container-form: 360px;   /* max-w-form: Login / Register column */
+  --container-panel: 360px;  /* the transform side panel */
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-develop: develop 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  --animate-enter: enter 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-exit: exit 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-scan: scan 1.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+
+  @keyframes develop {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
+  }
+  @keyframes enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes exit {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(4px); }
+  }
+  /* Indeterminate thin line while a transform is applied */
+  @keyframes scan {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(400%); }
+  }
+}
+
+/* 1px inset hairline so dark photos don't melt into the background */
+@utility photo-edge {
+  outline: 1px solid rgb(255 255 255 / 0.08);
+  outline-offset: -1px;
+}
+
+/* The safelight dot's glow. The only glow in the app, only while something develops. */
+@utility safelight-glow {
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--color-safelight) 70%, transparent);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-h-dvh bg-canvas font-sans text-fg antialiased;
+  }
+  /* Neutral selection: the safelight is never a filled block outside the primary button */
+  ::selection {
+    @apply bg-fg-subtle text-canvas;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

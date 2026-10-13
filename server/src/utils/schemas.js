@@ -15,3 +15,10 @@ export const credentialsSchema = z.object({
     .refine((p) => bytes(p) >= 8, 'Password must be at least 8 characters')
     .refine((p) => bytes(p) <= 72, 'Password is too long (max 72 bytes)'),
 });
+
+// Login only needs something to check. Applying the register rules here would turn a wrong (short) password
+// into a vague 400 instead of "Wrong username or password", and would lock out old accounts if the rules ever change.
+export const loginSchema = z.object({
+  username: z.string().trim().toLowerCase().min(1, 'Enter your username'),
+  password: z.string().min(1, 'Enter your password'),
+});

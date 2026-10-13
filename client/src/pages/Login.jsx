@@ -1,68 +1,100 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useCountdown } from '../hooks/useCountdown.js';
-import Field from '../components/Field.jsx';
-
-const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+import { useCountdown } from '../hooks/useCountdown';
+import { textLink } from '../lib/ui';
+import AuthLayout from './AuthLayout.jsx';
+import { Button } from '../components/Button';
+import { Notice } from '../components/Notice';
+import { RateLimitNotice } from '../components/RateLimitNotice';
+import { TextField } from '../components/TextField';
 
 export default function Login() {
   const { user, login } = useAuth();
   const location = useLocation();
-  const [error, setError] = useState(null);
+  const [values, setValues] = useState({ username: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [lockedFor, lockFor] = useCountdown();
+  const [error, setError] = useState(null);
+  // key changes on every 429, so the countdown restarts even if Retry-After repeats.
+  const [rateLimit, setRateLimit] = useState({ seconds: 0, key: 0 });
+  const locked = useCountdown(rateLimit.seconds, rateLimit.key) > 0;
 
   // Logged in (already, or just now): go back to where ProtectedRoute sent us from.
   if (user) return <Navigate to={location.state?.from?.pathname ?? '/'} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
+    if (locked || submitting) return;
+    if (!values.username || !values.password) return setError('Enter your username and password');
+
     setError(null);
     setSubmitting(true);
     try {
-      await login(form.get('username'), form.get('password'));
+      await login(values.username, values.password);
     } catch (err) {
-      if (err.code === 'RATE_LIMITED') lockFor(err.retryAfter ?? 60);
+      if (err.code === 'RATE_LIMITED') setRateLimit({ seconds: err.retryAfter ?? 60, key: Date.now() });
       else setError(err.message); // UNAUTHORIZED: "Wrong username or password"
-    } finally {
       setSubmitting(false);
     }
   }
 
+  const showError = error && !locked;
+  const set = (key) => (e) => setValues({ ...values, [key]: e.target.value });
+
   return (
-    <div className="mx-auto max-w-sm space-y-6 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Log in</h1>
+    <AuthLayout
+      title="Log in"
+      lead="Back to your photos. Anything you uploaded in the last 12 hours is still here."
+      footer={
+        <>
+          New here?{' '}
+          <Link to="/register" className={textLink}>
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <form
+        noValidate
+        aria-label="Log in"
+        aria-describedby={showError ? 'login-error' : undefined}
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-5"
+      >
+        <RateLimitNotice seconds={rateLimit.seconds} restartKey={rateLimit.key} />
+        {showError && (
+          <Notice>
+            <p id="login-error">{error}</p>
+          </Notice>
+        )}
 
-      {lockedFor > 0 && (
-        <p role="alert" className="rounded-md bg-amber-950 p-3 text-amber-200">
-          Too many attempts. Try again in {mmss(lockedFor)}.
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="rounded-md bg-red-950 p-3 text-red-200">
-          {error}
-        </p>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        {/* disabling the fieldset disables every input and button inside it */}
-        <fieldset disabled={submitting || lockedFor > 0} className="space-y-4">
-          <Field label="Username" name="username" autoComplete="username" required />
-          <Field label="Password" name="password" type="password" autoComplete="current-password" required />
-          <button className="w-full rounded-md bg-zinc-100 py-2 font-medium text-zinc-900 disabled:opacity-50">
-            {submitting ? 'Logging in…' : 'Log in'}
-          </button>
+        <fieldset disabled={submitting || locked} className="flex min-w-0 flex-col gap-4">
+          <legend className="sr-only">Your account</legend>
+          <TextField
+            label="Username"
+            name="username"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            value={values.username}
+            onChange={set('username')}
+          />
+          <TextField
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={values.password}
+            onChange={set('password')}
+          />
         </fieldset>
-      </form>
 
-      <p className="text-sm text-zinc-400">
-        No account?{' '}
-        <Link to="/register" className="text-zinc-100 underline">
-          Sign up
-        </Link>
-      </p>
-    </div>
+        <Button type="submit" busy={submitting} busyLabel="Logging in" disabled={locked} className="mt-1 w-full">
+          Log in
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

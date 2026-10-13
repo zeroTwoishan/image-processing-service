@@ -215,7 +215,7 @@ The app has five pages. Gallery and Image Detail sit behind a login guard. The 7
 
 ## Build phases
 
-There are seven phases (Phase 2 is split into 2a and 2b), built in order. Each one builds the backend and the frontend for a feature together, ships with its tests, and ends with something you can demo.
+There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus Phase 7 (guest mode) after launch. Each one builds the backend and the frontend for a feature together, ships with its tests, and ends with something you can demo.
 
 ### Phase 0: Setup
 
@@ -297,7 +297,7 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order. Each o
 - [ ] Run the hosting check in the Deployment section, then do a rough first deploy: API on Render (Dockerfile) with Atlas + R2, client on Vercel. It doesn't need to look good; the point is to hit the deploy-only problems now, not in Phase 6
 - [ ] `app.set('trust proxy', 1)` in production, or every user shares the proxy's IP and one person's failed logins lock everyone out (the deep dive in Phase 5 explains why)
 - [ ] In production, `sharp.concurrency(1)` and `sharp.cache(false)` at boot, so Sharp fits in a small instance's RAM
-- [ ] `cors` allows only the Vercel URL (from an env var)
+- [ ] `cors` allows only the Vercel URL (from an env var), and sets `exposedHeaders: ['Retry-After', 'RateLimit', 'RateLimit-Policy']`; cross-origin, the browser hides those headers from JavaScript otherwise and the rate-limit countdown breaks
 
 **Done when:** switching `STORAGE_DRIVER` and `PUBLIC_ASSET_BASE` sends new uploads to R2 with no other code changes, existing rows are never rewritten, and on the live URL you can register, upload a 10 MB phone photo, transform it and download the result without the server crashing.
 
@@ -325,6 +325,20 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order. Each o
 - [ ] Clean up local Docker once the project is done: `docker compose down -v` (removes the Mongo container and its data volume), `docker system prune -a` (removes downloaded images), then uninstall Docker Desktop if nothing else needs it
 
 **Done when:** deleting an original leaves no orphaned files, and there's a live URL you can put on your resume and portfolio.
+
+### Phase 7 (after launch): Guest mode
+
+Visitors can try the editor without an account; nothing they upload is stored. Built after Phase 6 because it reuses Phase 3's `applyTransform` and TransformPanel and needs Phase 5's rate limiting (anonymous users cost CPU).
+
+- [ ] Logged-out visitors land on a "Try it" editor at `/` instead of the login page; logged-in users still see their gallery
+- [ ] `POST /api/guest/transform`: multipart `image` + `transformations` JSON, same Multer/Sharp limits (10 MB, 25 MP), runs `applyTransform` in memory and sends the result bytes back. No Mongo rows, no stored files, nothing to clean up
+- [ ] Stricter per-IP limit for guests (for example 5 transforms per minute), `429 RATE_LIMITED` as usual
+- [ ] Client keeps the original and the result only in the browser (object URLs) for the before/after view and the download; a note says "Not saved. Download your result before you leave"
+- [ ] "Try with a sample photo" button, so a visitor can test without their own image
+- [ ] Sign-up nudge after the first successful download: a non-blocking card (bottom corner on desktop, bottom sheet on phones) saying what an account adds (a gallery, versions, 12-hour storage), with "Create account", "Log in" and "Not now". Dismiss with ×, Esc or "Not now"; it doesn't steal focus (announced politely), never appears mid-edit, and stays hidden for 7 days after a dismiss (localStorage)
+- [ ] Tests: guest transform returns an image and writes nothing to Mongo or storage; the guest limit gives 429
+
+**Done when:** a logged-out visitor can transform and download a photo with nothing saved on the server, and the nudge appears once after the first download and is easy to dismiss.
 
 ## Learning plan
 
