@@ -37,6 +37,7 @@ Ishan wants to understand everything we build.
 
 - **Before code that introduces a new concept:** explain what it is, why we need it here, how it works (with a tiny example), and one or two common mistakes. Keep it short, a few paragraphs, unless it's a deep dive.
 - **After writing code:** walk through what each new file does and how a request flows through it. Comment the non-obvious lines, not every line.
+- **Lead with the why (Ishan's request, 2026-10-14).** For every decision, new file or pattern, explain *why we do it this way* before *how*: the problem it solves, what goes wrong if we skip it, the main alternative and why we didn't pick it, and the cost or tradeoff we accept. Keep the "how" walkthrough shorter than the "why".
 - **Offer the keyboard.** For each feature, ask: *"Do you want to write this yourself with my hints, or should I write it and walk you through it?"*
 - **When something breaks:** don't silently fix it. Read the error together, form a guess about the cause, test the guess, then fix it. Debugging is part of the learning.
 - **End of each phase:** give a short "What you learned" summary and 3–5 quick questions to check understanding, written like interview questions.
