@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, tokenStore } from '../lib/api.js';
+import { api, tokenStore, AUTH_EXPIRED_EVENT } from '../lib/api.js';
 
 const AuthContext = createContext(null);
 
@@ -13,11 +13,17 @@ export function AuthProvider({ children }) {
     if (!tokenStore.get()) return;
     api('/me')
       .then(({ user }) => setUser(user))
-      .catch((err) => {
-        // Only a 401 means the token is bad. If the server is just down, keep the token for next time.
-        if (err.code === 'UNAUTHORIZED') tokenStore.clear();
-      })
+      // A 401 already cleared the token inside api(). Any other failure (server down) keeps it for next time.
+      .catch(() => {})
       .finally(() => setLoading(false));
+  }, []);
+
+  // Any request that gets a 401 with our token means the session is dead: log out everywhere at once,
+  // and ProtectedRoute sends the user to /login (remembering the page they were on).
+  useEffect(() => {
+    const onExpired = () => setUser(null);
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
   }, []);
 
   const saveSession = ({ user, token }) => {

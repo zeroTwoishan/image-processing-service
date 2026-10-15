@@ -3,6 +3,8 @@ import helmet from 'helmet';
 import cors from 'cors';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
+import imageRouter from './routes/image.js';
+import { storage } from './services/storage/index.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { createAuthLimiter } from './middleware/rateLimit.js';
 
@@ -20,6 +22,12 @@ export function createApp() {
   // Must run before authRouter. Both paths share one counter: 5 attempts per IP per minute in total.
   app.use(['/api/login', '/api/register'], createAuthLimiter());
   app.use('/api', authRouter);
+  app.use('/api/images', imageRouter);
+
+  // Uploaded files, served straight from disk. Public on purpose: an <img> tag can't send our JWT, so the
+  // random UUID in each URL is what keeps them private. A key is never reused for different bytes, so
+  // browsers may cache each file for a year without checking back (immutable). R2 replaces this in Phase 4.
+  app.use('/uploads', express.static(storage.root, { index: false, immutable: true, maxAge: '1y' }));
 
   // These two must stay last: nothing above matched, or something above threw.
   app.use(notFound);

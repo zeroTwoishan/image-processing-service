@@ -6,6 +6,7 @@ import { FullPageSpinner } from './components/FullPageSpinner';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Gallery from './pages/Gallery.jsx';
+import ImageDetail from './pages/ImageDetail.jsx';
 import NotFound from './pages/NotFound.jsx';
 
 // Every page gets the navbar; <Outlet /> is where the matched page renders.
@@ -30,6 +31,7 @@ export default function App() {
         {/* Everything inside here needs a logged-in user */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Gallery />} />
+          <Route path="/images/:id" element={<ImageDetail />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Route>

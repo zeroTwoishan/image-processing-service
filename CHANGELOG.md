@@ -2,6 +2,14 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-16: Phase 2a done; precise privacy wording
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Phase 2a | Privacy copy says "hidden location and camera data" and that text printed on the picture stays: a real phone photo had its place and date stamped into the pixels, which EXIF stripping can't remove |
+| 2 | Phase 2a → 6 | The README part of the privacy item moved to the Phase 6 README item (there is no README before Phase 6) |
+| 3 | Env | New `PUBLIC_ASSET_BASE` (default `/uploads`), `IMAGE_TTL_HOURS` (12), `UPLOAD_DIR` (`uploads`; tests use `uploads-test`) |
+
 ### 2026-10-14: Guest mode, CORS headers
 
 | # | Section | Change |

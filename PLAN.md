@@ -246,18 +246,18 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 
 ### Phase 2a: Upload and thumbnails
 
-- [ ] Multer (10 MB, jpeg/png/webp/gif/avif) plus a Sharp check that the bytes are a real image
-- [ ] Set `limitInputPixels` explicitly on every `sharp()` call (25 MP, about 100 MB of raw pixels); a 10 MB PNG can decompress to gigabytes, and the production server has little RAM
-- [ ] Re-encode still originals before saving: `.autoOrient()`, then the same format at quality 90 (PNG stays lossless). Sharp drops EXIF (GPS, camera details) on output, and the pixels come out upright, so `width`/`height` come straight from the encode's `info` (a portrait phone photo reports 3024×4032). Animated GIF/AVIF are stored as-is, since re-encoding would flatten them (GIF can't hold EXIF anyway)
-- [ ] Storage interface (`save`, `get`, `remove`) with a local-disk version. Keys are random UUIDs (`crypto.randomUUID()`). Mongo stores `storageKey` only; URLs are built at serialization from `PUBLIC_ASSET_BASE`
-- [ ] No orphan files: if the Mongo insert fails after the files were saved, delete those files before returning the error
-- [ ] Thumbnail on upload: auto-orient, first frame only, \~400px-wide WebP with EXIF stripped, saved as `thumbnailKey`. This is the first use of the Sharp pipeline
-- [ ] Accept GIF and AVIF; record `animated` (more than one frame) on the image
-- [ ] Advertise EXIF stripping as a privacy feature ("we remove your photo's location") in the UI and README
-- [ ] Every image gets `expiresAt` = upload time + `IMAGE_TTL_HOURS` (12), stored in UTC; versions copy their original's `expiresAt`, so the whole family expires together
-- [ ] Image model, indexes `{ owner: 1, createdAt: -1, _id: -1 }`, `{ owner: 1, parent: 1 }` and `{ expiresAt: 1 }`
-- [ ] `POST /images`, `GET /images/:id` (owner only; `versions` is `[]` until Phase 3)
-- [ ] Frontend: UploadDropzone, a simple Image Detail page that shows the upload
+- [x] Multer (10 MB, jpeg/png/webp/gif/avif) plus a Sharp check that the bytes are a real image
+- [x] Set `limitInputPixels` explicitly on every `sharp()` call (25 MP, about 100 MB of raw pixels); a 10 MB PNG can decompress to gigabytes, and the production server has little RAM
+- [x] Re-encode still originals before saving: `.autoOrient()`, then the same format at quality 90 (PNG stays lossless). Sharp drops EXIF (GPS, camera details) on output, and the pixels come out upright, so `width`/`height` come straight from the encode's `info` (a portrait phone photo reports 3024×4032). Animated GIF/AVIF are stored as-is, since re-encoding would flatten them (GIF can't hold EXIF anyway)
+- [x] Storage interface (`save`, `get`, `remove`) with a local-disk version. Keys are random UUIDs (`crypto.randomUUID()`). Mongo stores `storageKey` only; URLs are built at serialization from `PUBLIC_ASSET_BASE`
+- [x] No orphan files: if the Mongo insert fails after the files were saved, delete those files before returning the error
+- [x] Thumbnail on upload: auto-orient, first frame only, \~400px-wide WebP with EXIF stripped, saved as `thumbnailKey`. This is the first use of the Sharp pipeline
+- [x] Accept GIF and AVIF; record `animated` (more than one frame) on the image
+- [x] Advertise EXIF stripping as a privacy feature in the UI: "We remove the hidden location and camera data saved in your photo. Text printed on the picture itself stays." (Precise on purpose: some phones stamp the place and date into the pixels, which no metadata stripping can remove. The README line comes with the Phase 6 README)
+- [x] Every image gets `expiresAt` = upload time + `IMAGE_TTL_HOURS` (12), stored in UTC; versions copy their original's `expiresAt`, so the whole family expires together
+- [x] Image model, indexes `{ owner: 1, createdAt: -1, _id: -1 }`, `{ owner: 1, parent: 1 }` and `{ expiresAt: 1 }`
+- [x] `POST /images`, `GET /images/:id` (owner only; `versions` is `[]` until Phase 3)
+- [x] Frontend: UploadDropzone, a simple Image Detail page that shows the upload
 
 **Done when:** you upload a portrait phone photo and it stands upright with the right dimensions; the stored original has no EXIF (`sharp(stored).metadata()` has no `exif`); a text file renamed to `.jpg` gets `400 UNSUPPORTED_FILE`; an 11 MB file gets `413 FILE_TOO_LARGE`; another user gets a 404 for your image ID; tests cover all five.
 
@@ -321,7 +321,7 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 - [ ] R2 lifecycle rule that deletes objects older than 1 day, as a safety net in case the cleanup job ever misses
 - [ ] Fill any gaps in test coverage, and run the tests in CI with GitHub Actions (a `mongo` service container gives the tests their database)
 - [ ] Loading and empty states, toasts, a mobile layout
-- [ ] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete
+- [ ] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete, plus the privacy feature (hidden EXIF/GPS removed on upload; text stamped on the photo stays)
 - [ ] A ~5-second GIF at the top of the README: upload → transform → before/after → download. Recruiters skim READMEs; the GIF shows the app working before they read a word
 - [ ] Favicon (SVG, plus a PNG fallback) and link-preview tags in `index.html`: `<meta name="description">`, `og:title`, `og:description`, `og:image` (a 1200×630 `og.png`) and `twitter:card`, so the live link shows a proper card on LinkedIn and in chats. Check it with a link-preview tester before sharing
 - [ ] Redeploy the finished app to the host chosen in Phase 4

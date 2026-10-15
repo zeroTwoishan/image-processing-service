@@ -101,6 +101,6 @@ Run from the repo root unless noted. Docker Desktop must be running for the Mong
 
 ## Current status
 
-- Phases 0 and 1 are done (Done-when passed) and restyled with the Darkroom design (tokens in `client/src/index.css`; the full Claude Design export is in the gitignored `design-reference/` for later phases). Next: Phase 2a plan, waiting for Ishan's OK.
+- Phases 0, 1 and 2a are done (Done-when passed); the UI uses the Darkroom design (tokens in `client/src/index.css`; the full Claude Design export is in the gitignored `design-reference/` for later phases). Next: Phase 2b plan (gallery + expiry), waiting for Ishan's OK.
 - The project stays in `Projects/` (inside OneDrive) with Ishan's other projects. If `npm install` fails with `EPERM`/`EBUSY`, pause OneDrive sync and retry.
 - No open items left in PLAN.md.

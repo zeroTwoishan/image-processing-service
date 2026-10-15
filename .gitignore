@@ -4,3 +4,4 @@ server/uploads/
 dist/
 coverage/
 design-reference/
+server/uploads-test/

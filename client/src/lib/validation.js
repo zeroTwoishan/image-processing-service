@@ -1,4 +1,14 @@
-// Client-side checks that mirror the server rules. The server stays the source of truth.
+// Client-side checks that mirror the server's rules. The server stays the source of truth.
+
+export const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/** Returns 'too-large' | 'unsupported' | null */
+export function validateFile(file) {
+  if (!ACCEPTED_TYPES.includes(file.type)) return 'unsupported';
+  if (file.size > MAX_UPLOAD_BYTES) return 'too-large';
+  return null;
+}
 
 const USERNAME = /^[A-Za-z0-9_]{3,30}$/;
 

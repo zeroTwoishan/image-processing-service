@@ -9,6 +9,8 @@ export default defineConfig({
       JWT_SECRET: 'test-only-secret-not-used-anywhere-real',
       // Tests check that hashing works, not that it's slow; cost 12 would make the suite flaky on a busy laptop.
       BCRYPT_COST: '4',
+      // Test uploads go to their own folder (wiped by the tests), never mixed with your real uploads/.
+      UPLOAD_DIR: 'uploads-test',
     },
     // Test files share one database and clear it before each test, so run them one at a time.
     fileParallelism: false,
