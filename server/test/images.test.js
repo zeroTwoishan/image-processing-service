@@ -65,6 +65,9 @@ async function seedImages(owner, count, { createdAt = (i) => new Date(Date.UTC(2
   return Object.values(insertedIds).map(String);
 }
 
+const transform = (token, id, transformations) =>
+  request(app).post(`/api/images/${id}/transform`).set('Authorization', `Bearer ${token}`).send({ transformations });
+
 const list = (token, query = '') => request(app).get(`/api/images${query}`).set('Authorization', `Bearer ${token}`);
 
 async function storedFileCount() {
@@ -235,6 +238,185 @@ describe('GET /api/images/:id', () => {
     const res = await request(app).get(`/api/images/${id}`).set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('NOT_FOUND');
+  });
+});
+
+describe('POST /api/images/:id/transform', () => {
+  // A real upload: the transform reads the stored file, so a seeded row without a file won't do.
+  async function uploadOriginal(token) {
+    return (await upload(token, await solid(40, 30).jpeg().toBuffer())).body.image;
+  }
+
+  it('creates a new version and leaves the original alone', async () => {
+    const token = await signUp();
+    const original = await uploadOriginal(token);
+
+    const res = await transform(token, original.id, { rotate: 90, format: 'webp' });
+    expect(res.status).toBe(201);
+    expect(res.body.image).toMatchObject({
+      parent: original.id,
+      transformations: { rotate: 90, format: 'webp' },
+      originalName: 'IMG_0420.webp',
+      format: 'webp',
+      mimeType: 'image/webp',
+      width: 30, // 40×30 turned 90°
+      height: 40,
+      animated: false,
+      expiresAt: original.expiresAt, // the whole family expires together
+    });
+    expect(res.body.image.url).toMatch(/^\/uploads\/versions\/[0-9a-f-]{36}\.webp$/);
+
+    const stored = await sharp(await storedFile(res.body.image.url)).metadata();
+    expect([stored.format, stored.width, stored.height]).toEqual(['webp', 30, 40]);
+    expect((await request(app).get(res.body.image.thumbnailUrl)).status).toBe(200); // a version gets its own thumbnail
+
+    const untouched = await sharp(await storedFile(original.url)).metadata();
+    expect([untouched.format, untouched.width, untouched.height]).toEqual(['jpeg', 40, 30]);
+  });
+
+  it('lists versions under the original, newest first; a version lists none', async () => {
+    const token = await signUp();
+    const original = await uploadOriginal(token);
+    const first = (await transform(token, original.id, { rotate: 90 })).body.image;
+    const second = (await transform(token, original.id, { filters: { grayscale: true } })).body.image;
+
+    const res = await request(app).get(`/api/images/${original.id}`).set('Authorization', `Bearer ${token}`);
+    expect(res.body.versions.map((v) => v.id)).toEqual([second.id, first.id]);
+
+    const version = await request(app).get(`/api/images/${first.id}`).set('Authorization', `Bearer ${token}`);
+    expect(version.body).toMatchObject({ image: { id: first.id, parent: original.id }, versions: [] });
+  });
+
+  it('accepts numbers sent as strings (coerced), but not booleans sent as strings', async () => {
+    const token = await signUp();
+    const { id } = await uploadOriginal(token);
+
+    const resized = await transform(token, id, { resize: { width: '20' } });
+    expect(resized.status).toBe(201);
+    expect([resized.body.image.width, resized.body.image.height]).toEqual([20, 15]);
+
+    const flipped = await transform(token, id, { flip: 'false' }); // coercing "false" would give true
+    expect(flipped.status).toBe(400);
+    expect(flipped.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('400 TRANSFORM_ON_VERSION when the image is already a version', async () => {
+    const token = await signUp();
+    const version = (await transform(token, (await uploadOriginal(token)).id, { rotate: 90 })).body.image;
+
+    const res = await transform(token, version.id, { rotate: 90 });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('TRANSFORM_ON_VERSION');
+  });
+
+  it.each([
+    ['rotate: 45', { rotate: 45 }],
+    ['an unknown key (a typo)', { rotat: 90 }],
+    ['quality over 100', { compress: { quality: 101 } }],
+    ['a format we don’t produce', { format: 'bmp' }],
+    ['resize with no sides', { resize: {} }],
+    ['an empty watermark', { watermark: { text: '   ' } }],
+  ])('400 VALIDATION_FAILED for %s', async (_, transformations) => {
+    const token = await signUp();
+    const res = await transform(token, (await uploadOriginal(token)).id, transformations);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('400 INVALID_TRANSFORM for a transform that changes nothing, and nothing is saved', async () => {
+    const token = await signUp();
+    const { id } = await uploadOriginal(token);
+    const filesBefore = await storedFileCount();
+
+    const res = await transform(token, id, {});
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('INVALID_TRANSFORM');
+    expect(await storedFileCount()).toBe(filesBefore);
+  });
+
+  it('400 INVALID_CROP when the crop falls outside the image', async () => {
+    const token = await signUp();
+    const res = await transform(token, (await uploadOriginal(token)).id, { crop: { x: 30, y: 0, width: 20, height: 10 } });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatchObject({ code: 'INVALID_CROP', details: { width: 40, height: 30 } });
+  });
+
+  it('crops past 10000 px on a wide panorama (only the image itself limits a crop)', async () => {
+    const token = await signUp();
+    const { body } = await upload(token, await solid(12_000, 4).jpeg().toBuffer());
+    const res = await transform(token, body.image.id, { crop: { x: 11_000, y: 0, width: 500, height: 4 } });
+    expect(res.status).toBe(201);
+    expect([res.body.image.width, res.body.image.height]).toEqual([500, 4]);
+  });
+
+  it('another user gets 404 for your image', async () => {
+    const original = await uploadOriginal(await signUp('ishan'));
+    const res = await transform(await signUp('stranger'), original.id, { rotate: 90 });
+    expect(res.status).toBe(404);
+  });
+
+  it('an expired original is 404 (checked before its file is read)', async () => {
+    const token = await signUp();
+    const [id] = await seedImages(await userId(token), 1, { expiresAt: () => new Date(Date.now() - 1000) });
+    expect((await transform(token, id, { rotate: 90 })).status).toBe(404);
+  });
+
+  it('leaves no files behind when saving the version’s row fails', async () => {
+    const token = await signUp();
+    const { id } = await uploadOriginal(token);
+    const filesBefore = await storedFileCount();
+    const create = vi.spyOn(Image, 'create').mockRejectedValueOnce(new Error('database went away'));
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await transform(token, id, { rotate: 90 });
+
+    expect(res.status).toBe(500);
+    expect(await storedFileCount()).toBe(filesBefore); // the version and its thumbnail were saved, then removed
+    create.mockRestore();
+    quiet.mockRestore();
+  });
+
+  it('401 without a token', async () => {
+    expect((await request(app).post('/api/images/abc/transform').send({ transformations: { rotate: 90 } })).status).toBe(401);
+  });
+});
+
+describe('PATCH /api/images/:id (rename)', () => {
+  const rename = (token, id, body) => request(app).patch(`/api/images/${id}`).set('Authorization', `Bearer ${token}`).send(body);
+
+  it('renames the photo and keeps its real extension', async () => {
+    const token = await signUp();
+    const { body } = await upload(token, await solid(40, 30).jpeg().toBuffer());
+
+    const res = await rename(token, body.image.id, { name: '  Goa sunset  ' });
+    expect(res.status).toBe(200);
+    expect(res.body.image.originalName).toBe('Goa sunset.jpg'); // trimmed; the extension comes from the format
+
+    const reread = await request(app).get(`/api/images/${body.image.id}`).set('Authorization', `Bearer ${token}`);
+    expect(reread.body.image.originalName).toBe('Goa sunset.jpg'); // saved, not just echoed
+  });
+
+  it.each([
+    ['an empty name', { name: '   ' }],
+    ['a slash (not a path)', { name: '../secret' }],
+    ['a control character', { name: 'bad\u0000name' }],
+    ['a name over 200 characters', { name: 'a'.repeat(201) }],
+    ['other fields', { name: 'ok', storageKey: 'originals/hack.jpg' }],
+  ])('400 VALIDATION_FAILED for %s', async (_, payload) => {
+    const token = await signUp();
+    const { body } = await upload(token, await solid(40, 30).jpeg().toBuffer());
+    const res = await rename(token, body.image.id, payload);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('another user gets 404', async () => {
+    const { body } = await upload(await signUp('ishan'), await solid(40, 30).jpeg().toBuffer());
+    expect((await rename(await signUp('stranger'), body.image.id, { name: 'mine now' })).status).toBe(404);
+  });
+
+  it('401 without a token', async () => {
+    expect((await request(app).patch('/api/images/abc').send({ name: 'x' })).status).toBe(401);
   });
 });
 

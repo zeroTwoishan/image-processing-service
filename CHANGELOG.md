@@ -2,6 +2,21 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-24: Phase 3 scope: live preview, Edit from original, no placeholder cache
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Phase 3 | New item: live preview in the browser while editing (CSS transforms and filters, watermark overlay, dimmed crop area); one Apply makes the real file. Ishan's call: users expect phone-gallery-style instant feedback |
+| 2 | Phase 3 | New item: on a version's page, "Edit from original" opens the original with the panel prefilled, so users can keep editing without version chaining |
+| 3 | Phase 3, Folder structure | Dropped the no-op `cache.js`: Phase 5 adds the real `cacheKey` lookup directly, and an empty placeholder is code with no job |
+| 4 | Folder structure | New `services/formats.js` (formats and encoders, shared by upload and transform); `escapeXml` lives in `transform.js`, not `utils/` |
+| 5 | Phase 3 | New item: phone-style drag crop box (Ishan: "a box appears on the photo and the area inside is what we get"), plus a plain explanation and live result size for Resize |
+| 6 | Phase 3 | New item: before/after shows the two pictures side by side when their shapes differ (rotate/crop); the wipe slider only for same-shape edits. Found by Ishan in the hand test |
+| 7 | Phase 3 | Sharp 0.35 applies flip/flop before rotate despite its docs; `applyTransform` swaps them on quarter turns so the pipeline really is rotate → flip. Found by the code review, covered by a test |
+| 8 | API contract | Crop coordinates have no 10000 px cap any more (a 25 MP panorama can be 12000 px wide); the fit check is the real limit |
+| 9 | API contract, Phase 3 | New `PATCH /api/images/:id` `{ name }` to rename a photo (Ishan: rename in place with a pencil, downloads use the name). The extension is always the stored format's, never typed |
+| 10 | Phase 3 | Image page layout: compact breadcrumb header (name next to "Your photos"), Apply beside Download on desktop, photo moved up; Quality is hidden (with a one-line reason) for lossless PNG/GIF instead of a disabled slider |
+
 ### 2026-10-16: Phase 2a done; precise privacy wording
 
 | # | Section | Change |

@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { parseImageUpload } from '../middleware/upload.js';
-import { validateQuery } from '../middleware/validate.js';
-import { listQuerySchema } from '../utils/schemas.js';
-import { uploadImage, listImages, getImage } from '../controllers/image.js';
+import { validateBody, validateQuery } from '../middleware/validate.js';
+import { listQuerySchema, renameSchema, transformSchema } from '../utils/schemas.js';
+import { uploadImage, listImages, getImage, transformImage, renameImage } from '../controllers/image.js';
 
 const router = Router();
 
@@ -14,5 +14,7 @@ router.use(requireAuth);
 router.post('/', parseImageUpload, uploadImage);
 router.get('/', validateQuery(listQuerySchema), listImages);
 router.get('/:id', getImage);
+router.patch('/:id', validateBody(renameSchema), renameImage);
+router.post('/:id/transform', validateBody(transformSchema), transformImage);
 
 export default router;

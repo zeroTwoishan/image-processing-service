@@ -1,27 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { openImage, MAX_PIXELS } from './openImage.js';
 import { makeThumbnail } from './thumbnail.js';
+import { detectFormat, FORMATS } from './formats.js';
 import { ApiError } from '../utils/ApiError.js';
 
-// Sharp's format name → what we store. AVIF shows up as "heif" because AVIF and iPhone HEIC share one container
-// format; the compression tells them apart. We accept AVIF only (av1), not HEIC (hevc).
-function detectType({ format, compression }) {
-  if (format === 'jpeg') return { format: 'jpeg', ext: 'jpg', mimeType: 'image/jpeg' };
-  if (format === 'png') return { format: 'png', ext: 'png', mimeType: 'image/png' };
-  if (format === 'webp') return { format: 'webp', ext: 'webp', mimeType: 'image/webp' };
-  if (format === 'gif') return { format: 'gif', ext: 'gif', mimeType: 'image/gif' };
-  if (format === 'heif' && compression === 'av1') return { format: 'avif', ext: 'avif', mimeType: 'image/avif' };
-  return null;
-}
-
 // Re-encode in the same format. Quality 90 is visually identical for photos; PNG and GIF are lossless anyway.
-const encoders = {
-  jpeg: (img) => img.jpeg({ quality: 90 }),
-  png: (img) => img.png(),
-  webp: (img) => img.webp({ quality: 90 }),
-  gif: (img) => img.gif(),
-  avif: (img) => img.avif({ quality: 90 }),
-};
+const UPLOAD_QUALITY = 90;
 
 const unsupported = () => new ApiError(400, 'UNSUPPORTED_FILE', 'That file isn’t a supported image (JPEG, PNG, WebP, GIF or AVIF)');
 const tooManyPixels = () =>
@@ -39,8 +23,9 @@ export async function prepareUpload(buffer) {
   try {
     // Reads only the header: format, dimensions, frame count. The pixel limit is enforced here already.
     const meta = await openImage(buffer).metadata();
-    const type = detectType(meta);
-    if (!type) throw unsupported();
+    const format = detectFormat(meta);
+    if (!format) throw unsupported();
+    const type = FORMATS[format];
 
     const animated = (meta.pages ?? 1) > 1;
     const id = randomUUID(); // unguessable, collision-free, and never derived from the user's file name
@@ -49,7 +34,7 @@ export async function prepareUpload(buffer) {
       animated
         ? // Opened normally, Sharp reports one frame's height, which is the size people see.
           { buffer, width: meta.width, height: meta.pageHeight ?? meta.height }
-        : encoders[type.format](openImage(buffer).autoOrient())
+        : type.encode(openImage(buffer).autoOrient(), UPLOAD_QUALITY)
             .toBuffer({ resolveWithObject: true })
             // info = the real output size, already upright (a portrait phone photo gives 3024×4032)
             .then(({ data, info }) => ({ buffer: data, width: info.width, height: info.height })),
@@ -63,7 +48,7 @@ export async function prepareUpload(buffer) {
         width: original.width,
         height: original.height,
         size: original.buffer.length,
-        format: type.format,
+        format,
         mimeType: type.mimeType,
         animated,
       },

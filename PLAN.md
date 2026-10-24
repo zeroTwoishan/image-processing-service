@@ -89,10 +89,11 @@ image-processing-service/    # lives in Projects/ next to the other projects
 │       ├── controllers/      # auth, image
 │       ├── services/
 │       │   ├── storage/      # index.js, localStorage.js, s3Storage.js (phase 4)
-│       │   ├── transform.js  # applyTransform(buffer, t) → { buffer, meta } — pure
+│       │   ├── transform.js  # applyTransform(buffer, t) → { buffer, meta } — pure; exports escapeXml
+│       │   ├── formats.js    # accepted/produced formats and their encoders (upload + transform)
 │       │   ├── thumbnail.js  # ~400px WebP on upload
-│       │   └── cache.js      # no-op in phase 3, Mongo cacheKey lookup in phase 5
-│       └── utils/            # ApiError.js (with error codes), schemas.js, escapeXml.js
+│       │   └── cache.js      # Mongo cacheKey lookup (phase 5)
+│       └── utils/            # ApiError.js (with error codes), schemas.js
 └── client/
     ├── vite.config.js        # proxies /api and /uploads to :4000
     └── src/
@@ -118,6 +119,7 @@ All routes live under `/api`, and every `/images` route needs `Authorization: Be
 | GET | `/api/images` | `?page=1&limit=10` (limit ≤ 50) | `200 { data: [image], pagination: { page, limit, total, totalPages } }`, newest first | 2b |
 | GET | `/api/images/:id` | — | `200 { image, versions }`; `versions` lists an original's versions, newest first (always `[]` for a version, and until Phase 3); `404 NOT_FOUND` if it isn't yours | 2a |
 | POST | `/api/images/:id/transform` | JSON `{ transformations }` (below) | `201 { image }` new version; `200 { image }` when the same transform already exists (phase 5); `400 TRANSFORM_ON_VERSION` if `:id` isn't an original | 3 |
+| PATCH | `/api/images/:id` | JSON `{ name }` (1–200 chars, no slashes or control characters; no extension) | `200 { image }`; `originalName` becomes `name` + the real extension of the stored format, so downloads always open | 3 |
 | DELETE | `/api/images/:id` | — | `204`; an original takes its direct versions with it | 6 |
 
 **Error codes**
@@ -194,7 +196,7 @@ The app has five pages. Gallery and Image Detail sit behind a login guard. The 7
 - `UploadDropzone`: drag-and-drop or click to pick a file. Checks type and size on the client, shows progress, and refreshes the grid.
 - `ImageCard`: shows `thumbnailUrl` (never the full image), name, dimensions, size, an "Expires in 5h 32m" countdown, and a "version" badge when `parent` is set.
 - `Pagination`: Prev/Next plus a page count, synced to `?page=` in the URL.
-- `TransformPanel`: controls grouped in pipeline order (Rotate/Flip → Crop → Resize → Filters → Watermark → Output), with the order shown as numbered steps. For GIF/AVIF it notes that "animated images are flattened to the first frame". On a version it is replaced by a link to transform the original. It sends only the fields you changed.
+- `TransformPanel`: controls grouped in pipeline order (Rotate/Flip → Crop → Resize → Filters → Watermark → Output), with the order shown as numbered steps. For GIF/AVIF it notes that "animated images are flattened to the first frame". On a version it is replaced by "Edit from original", which opens the original with the panel prefilled from that version. Every change previews instantly in the browser (CSS), nothing is sent until Apply, and Apply sends only the fields you changed.
 - Download button: browsers ignore `<a download>` for files on another origin (R2 in production), so it fetches the file as a blob, then saves it through an object URL. This needs a CORS rule on the R2 bucket (Phase 4).
 - Error handling: `api.js` throws errors that carry `code`. The UI branches on `RATE_LIMITED`, `INVALID_CROP`, `TRANSFORM_ON_VERSION` and the other codes, never on message text.
 
@@ -272,19 +274,23 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 
 ### Phase 3: Transformations
 
-- [ ] `services/transform.js`: `applyTransform(buffer, transformations)` → `{ buffer, meta }` as a pure function, with no Express or Mongo imports
-- [ ] Fixed pipeline order: `.autoOrient()` → rotate → flip/mirror → crop → resize (`withoutEnlargement: true`) → grayscale/sepia → watermark → format/compress
-- [ ] Sepia with `.recomb()` and the standard sepia matrix, not `tint()`
-- [ ] Watermark: escape `& < > " '` to XML entities before the text goes into the SVG, or keep it out of the SVG and composite a pre-rendered text buffer. Fonts come from fonts-dejavu-core in the Docker image
-- [ ] Animated GIF/AVIF: transform the first frame only (no `{ animated: true }`); the output is a still image
-- [ ] Resize: both sides given → exactly that size with `fit: 'cover'`; one side → aspect ratio kept; never enlarged (see Transform body)
-- [ ] Zod: `z.coerce.number()` for every numeric field, strict booleans, `rotate` limited to `0 | 90 | 180 | 270`. The crop check (`x + width ≤` rotated width, `y + height ≤` rotated height) returns `400 INVALID_CROP` instead of Sharp's opaque error
-- [ ] Reject a transform when the image's `parent` isn't null: `400 TRANSFORM_ON_VERSION`
-- [ ] Save the result as a new Image with `parent`, `transformations` and its own thumbnail (same no-orphan-files rule as upload)
-- [ ] `GET /images/:id` now fills `versions` for an original (uses the `{ owner, parent }` index)
-- [ ] `services/cache.js` as a no-op (`get` always misses, `set` does nothing), already called from the controller
-- [ ] Frontend: TransformPanel in pipeline order with the order shown, the flatten note for animated images, before/after view, versions list under the original, download button (blob fetch, see Frontend)
-- [ ] Tests: `applyTransform` per operation; rotate 90 + resize 800×600 on a 3000×2000 input gives 800×600; resize 800×600 on a 400×300 input stays 400×300; `rotate: 45` gives 400; a crop out of bounds gives 400; a watermark of `<&>` renders; a transform on a version gives 400; `GET /images/:id` lists the new version
+- [x] `services/transform.js`: `applyTransform(buffer, transformations)` → `{ buffer, meta }` as a pure function, with no Express or Mongo imports
+- [x] Fixed pipeline order: `.autoOrient()` → rotate → flip/mirror → crop → resize (`withoutEnlargement: true`) → grayscale/sepia → watermark → format/compress
+- [x] Sepia with `.recomb()` and the standard sepia matrix, not `tint()`
+- [x] Watermark: escape `& < > " '` to XML entities before the text goes into the SVG, or keep it out of the SVG and composite a pre-rendered text buffer. Fonts come from fonts-dejavu-core in the Docker image
+- [x] Animated GIF/AVIF: transform the first frame only (no `{ animated: true }`); the output is a still image
+- [x] Resize: both sides given → exactly that size with `fit: 'cover'`; one side → aspect ratio kept; never enlarged (see Transform body)
+- [x] Zod: `z.coerce.number()` for every numeric field, strict booleans, `rotate` limited to `0 | 90 | 180 | 270`. The crop check (`x + width ≤` rotated width, `y + height ≤` rotated height) returns `400 INVALID_CROP` instead of Sharp's opaque error
+- [x] Reject a transform when the image's `parent` isn't null: `400 TRANSFORM_ON_VERSION`
+- [x] Save the result as a new Image with `parent`, `transformations` and its own thumbnail (same no-orphan-files rule as upload)
+- [x] `GET /images/:id` now fills `versions` for an original (uses the `{ owner, parent }` index)
+- [x] Frontend: TransformPanel in pipeline order with the order shown, the flatten note for animated images, before/after view, versions list under the original, download button (blob fetch, see Frontend)
+- [x] Live preview in the browser while editing: rotate/flip/mirror (CSS transforms), grayscale/sepia (CSS filters; CSS `sepia()` uses the same matrix as the server), watermark text drawn over the photo, crop shown by dimming the area outside it. Resize/format/quality have no visible preview. All edits are collected, then one Apply makes the real file
+- [x] Phone-style crop box: "Crop on photo" puts a box on the photo with corner and edge grips; drag to resize or move it, and what's inside is the output. It stays in sync with the exact-pixel fields and follows the photo when it's rotated. The Resize step explains what it's for and shows the result size ("Result: 1200×900 px")
+- [x] Rename in place: the photo's name sits next to "Your photos" (breadcrumb), with a pencil; click to edit, Enter saves, Esc cancels. Saved through `PATCH /images/:id`, so Download uses it. Apply sits next to Download on desktop
+- [x] Before/after on a version: a drag-to-compare wipe when both pictures have the same shape; side by side when a rotate or crop changed the shape (a wipe can't line them up)
+- [x] On a version's page, "Edit from original" opens the original with the panel prefilled from the version's `transformations`, so "keep editing" never needs version chaining
+- [x] Tests: `applyTransform` per operation; rotate 90 + resize 800×600 on a 3000×2000 input gives 800×600; resize 800×600 on a 400×300 input stays 400×300; `rotate: 45` gives 400; a crop out of bounds gives 400; a watermark of `<&>` renders; a transform on a version gives 400; `GET /images/:id` lists the new version
 
 **Done when:** every roadmap transform works from the UI, creates a version that shows up in the versions list and can be downloaded, and a 90° rotate combined with an 800×600 resize of a large photo returns an 800×600 image.
 
@@ -306,7 +312,7 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 
 - [ ] Cache key = sha256 of `TRANSFORM_VERSION` + `imageId` + the sorted transformation JSON. Bump `TRANSFORM_VERSION` whenever the pipeline changes, so old results are never reused by mistake
 - [ ] Each saved version stores its `cacheKey`, with a unique *partial* index: `partialFilterExpression: { cacheKey: { $type: 'string' } }`. Don't give `cacheKey` a default of `null`: a sparse index would still index `null`, and the second original upload would fail with `E11000`
-- [ ] `cache.js` becomes a Mongo lookup: before running Sharp, find a version with the same `cacheKey` and return it (`200`)
+- [ ] `services/cache.js`, a Mongo lookup: before running Sharp, find a version with the same `cacheKey` and return it (`200`)
 - [ ] Two identical requests at once: the second insert fails on the unique index (error `E11000`). Catch it, delete the files the losing request just saved, and return the version the first request saved
 - [ ] Transform rate limit with express-rate-limit (for example 10 per minute per user, so it runs after the auth middleware) that returns `429 RATE_LIMITED` with `Retry-After` (deep dive 1)
 - [ ] Cleanup job (`services/cleanup.js`), run once at startup and then every hour: find images past `expiresAt`, delete their files (original, thumbnail, versions) from storage first, then delete the rows. Work in batches; running it twice must be harmless (deep dive 2)
