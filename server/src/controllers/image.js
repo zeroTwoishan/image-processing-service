@@ -35,11 +35,31 @@ export async function uploadImage(req, res) {
   }
 }
 
+// Expired images are hidden here, at read time. The cleanup job (Phase 5) only runs hourly and may be late
+// or crash, so it can't be what keeps an expired photo off the screen; it only frees the space.
+const notExpired = () => ({ expiresAt: { $gt: new Date() } });
+
+export async function listImages(req, res) {
+  const { page, limit } = req.validatedQuery;
+  const filter = { owner: req.userId, ...notExpired() };
+
+  const [data, total] = await Promise.all([
+    // _id breaks createdAt ties, so the order is the same on every query and paging never repeats or skips
+    // an image. The sort matches the { owner, createdAt, _id } index, so Mongo reads it in order (no in-memory sort).
+    Image.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit),
+    Image.countDocuments(filter),
+  ]);
+
+  // shortcut: skip() walks past every earlier row, fine while images live 12 hours; switch to a cursor
+  // ("after this createdAt + _id") if lists ever reach thousands.
+  res.json({ data, pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } });
+}
+
 export async function getImage(req, res) {
   const { id } = req.params;
   // owner is part of the query: someone else's image simply isn't found. 404, not 403, so we don't even
   // confirm that the ID exists. A malformed ID is also just "not found", not a 500 from a failed cast.
-  const image = mongoose.isValidObjectId(id) ? await Image.findOne({ _id: id, owner: req.userId }) : null;
+  const image = mongoose.isValidObjectId(id) ? await Image.findOne({ _id: id, owner: req.userId, ...notExpired() }) : null;
   if (!image) throw new ApiError(404, 'NOT_FOUND', 'Image not found');
   res.json({ image, versions: [] }); // versions arrive in Phase 3
 }

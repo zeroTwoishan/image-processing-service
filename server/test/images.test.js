@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import fs from 'node:fs/promises';
+import mongoose from 'mongoose';
 import request from 'supertest';
 import sharp from 'sharp';
 import { createApp } from '../src/app.js';
@@ -44,6 +45,27 @@ const upload = (token, buffer, filename = 'IMG_0420.jpg', contentType = 'image/j
 
 // "/uploads/originals/<uuid>.jpg" → the stored bytes
 const storedFile = (url) => storage.get(url.replace(/^\/uploads\//, ''));
+
+const userId = async (token) => (await request(app).get('/api/me').set('Authorization', `Bearer ${token}`)).body.user.id;
+
+// Listing never reads files, so list tests insert rows directly instead of running Sharp 12 times.
+// The raw collection is used so our createdAt values are kept (Mongoose timestamps would overwrite them).
+const HOUR = 60 * 60 * 1000;
+async function seedImages(owner, count, { createdAt = (i) => new Date(Date.UTC(2026, 0, 1) + i * 1000), expiresAt = () => new Date(Date.now() + HOUR) } = {}) {
+  const docs = Array.from({ length: count }, (_, i) => ({
+    owner: new mongoose.Types.ObjectId(owner),
+    originalName: `photo-${i}.jpg`,
+    storageKey: `originals/seed-${i}.jpg`,
+    thumbnailKey: `thumbnails/seed-${i}.webp`,
+    mimeType: 'image/jpeg', format: 'jpeg', size: 1000, width: 40, height: 30, animated: false,
+    parent: null, transformations: null,
+    createdAt: createdAt(i), updatedAt: createdAt(i), expiresAt: expiresAt(i),
+  }));
+  const { insertedIds } = await Image.collection.insertMany(docs);
+  return Object.values(insertedIds).map(String);
+}
+
+const list = (token, query = '') => request(app).get(`/api/images${query}`).set('Authorization', `Bearer ${token}`);
 
 async function storedFileCount() {
   const entries = await fs.readdir(storage.root, { recursive: true, withFileTypes: true }).catch(() => []);
@@ -204,5 +226,80 @@ describe('GET /api/images/:id', () => {
 
   it('401 without a token', async () => {
     expect((await request(app).get('/api/images/abc')).status).toBe(401);
+  });
+
+  it('an expired image is a 404, even before the cleanup job deletes it', async () => {
+    const token = await signUp();
+    const [id] = await seedImages(await userId(token), 1, { expiresAt: () => new Date(Date.now() - 1000) });
+
+    const res = await request(app).get(`/api/images/${id}`).set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('NOT_FOUND');
+  });
+});
+
+describe('GET /api/images', () => {
+  it('pages through 12 images newest first, each exactly once', async () => {
+    const token = await signUp();
+    const ids = await seedImages(await userId(token), 12); // photo-11 is the newest
+    const newestFirst = [...ids].reverse();
+
+    const pages = await Promise.all([1, 2, 3].map((p) => list(token, `?page=${p}&limit=5`)));
+    expect(pages.map((r) => r.body.data.length)).toEqual([5, 5, 2]);
+    expect(pages.flatMap((r) => r.body.data.map((img) => img.id))).toEqual(newestFirst);
+    expect(pages[0].body.pagination).toEqual({ page: 1, limit: 5, total: 12, totalPages: 3 });
+    expect(pages[0].body.data[0]).not.toHaveProperty('storageKey'); // same toJSON as the detail route
+  });
+
+  it('keeps a stable order when images share the same createdAt (tie broken by _id)', async () => {
+    const token = await signUp();
+    const sameTime = new Date(Date.UTC(2026, 0, 1));
+    const ids = await seedImages(await userId(token), 3, { createdAt: () => sameTime });
+
+    const pages = await Promise.all([1, 2, 3].map((p) => list(token, `?page=${p}&limit=1`)));
+    expect(pages.map((r) => r.body.data[0].id)).toEqual([...ids].sort().reverse()); // _id descending
+  });
+
+  it('defaults to page 1 with 10 per page, and an empty page past the end is 200, not 404', async () => {
+    const token = await signUp();
+    await seedImages(await userId(token), 3);
+
+    expect((await list(token)).body.pagination).toEqual({ page: 1, limit: 10, total: 3, totalPages: 1 });
+    const past = await list(token, '?page=9');
+    expect(past.status).toBe(200);
+    expect(past.body.data).toEqual([]);
+  });
+
+  it('an empty gallery reports 1 page, not 0', async () => {
+    expect((await list(await signUp())).body.pagination).toEqual({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  });
+
+  it.each(['?limit=51', '?limit=0', '?page=0', '?page=abc', '?page=1.5'])('400 VALIDATION_FAILED for %s', async (query) => {
+    const res = await list(await signUp(), query);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('only lists your own images', async () => {
+    const mine = await signUp('ishan');
+    await seedImages(await userId(await signUp('stranger')), 4);
+
+    const res = await list(mine);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.pagination.total).toBe(0);
+  });
+
+  it('hides expired images and leaves them out of the total', async () => {
+    const token = await signUp();
+    // even i: expired an hour ago; odd i: an hour left
+    await seedImages(await userId(token), 4, { expiresAt: (i) => new Date(Date.now() + (i % 2 ? HOUR : -HOUR)) });
+
+    const res = await list(token);
+    expect(res.body.data.map((img) => img.originalName)).toEqual(['photo-3.jpg', 'photo-1.jpg']);
+    expect(res.body.pagination.total).toBe(2);
+  });
+
+  it('401 without a token', async () => {
+    expect((await request(app).get('/api/images')).status).toBe(401);
   });
 });

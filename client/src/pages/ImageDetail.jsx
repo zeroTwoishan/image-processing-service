@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 import { ArrowLeftIcon } from '@phosphor-icons/react';
 import { api } from '../lib/api.js';
 import { cx, ICON, textLink } from '../lib/ui';
@@ -11,6 +11,7 @@ import NotFound from './NotFound.jsx';
 // Phase 2a: shows one upload. The transform panel, versions and download arrive in Phase 3.
 export default function ImageDetail() {
   const { id } = useParams();
+  const location = useLocation();
   const [state, setState] = useState({ status: 'loading' });
   const now = useNow(); // re-renders every 30 s so "Expires in" stays current
 
@@ -34,7 +35,8 @@ export default function ImageDetail() {
   return (
     <main className="mx-auto flex w-full max-w-page flex-1 flex-col gap-6 px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-8">
       <title>{image ? `${image.originalName} · Darkroom` : 'Photo · Darkroom'}</title>
-      <Link to="/" className={cx(textLink, 'inline-flex min-h-11 w-fit items-center gap-2 text-sm')}>
+      {/* Back to the gallery page you came from. Opened from a bookmark or shared link there is no state, so page 1. */}
+      <Link to={`/${location.state?.gallerySearch ?? ''}`} className={cx(textLink, 'inline-flex min-h-11 w-fit items-center gap-2 text-sm')}>
         <ArrowLeftIcon size={ICON.sm} aria-hidden="true" />
         Your photos
       </Link>

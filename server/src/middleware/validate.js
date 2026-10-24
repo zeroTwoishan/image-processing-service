@@ -11,3 +11,14 @@ export const validateBody = (schema) => (req, res, next) => {
   req.body = result.data;
   next();
 };
+
+// Same idea for the query string. Express 5 made req.query a read-only getter (re-parsed on every read),
+// so assigning to it throws; the cleaned copy goes on req.validatedQuery instead.
+export const validateQuery = (schema) => (req, res, next) => {
+  const result = schema.safeParse(req.query);
+  if (!result.success) {
+    throw new ApiError(400, 'VALIDATION_FAILED', 'Some query parameters are invalid', z.flattenError(result.error));
+  }
+  req.validatedQuery = result.data;
+  next();
+};

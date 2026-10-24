@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { parseImageUpload } from '../middleware/upload.js';
-import { uploadImage, getImage } from '../controllers/image.js';
+import { validateQuery } from '../middleware/validate.js';
+import { listQuerySchema } from '../utils/schemas.js';
+import { uploadImage, listImages, getImage } from '../controllers/image.js';
 
 const router = Router();
 
@@ -10,6 +12,7 @@ const router = Router();
 router.use(requireAuth);
 
 router.post('/', parseImageUpload, uploadImage);
+router.get('/', validateQuery(listQuerySchema), listImages);
 router.get('/:id', getImage);
 
 export default router;

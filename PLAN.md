@@ -263,10 +263,10 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 
 ### Phase 2b: Gallery and expiry
 
-- [ ] `GET /images` (paginated), sorted by `{ createdAt: -1, _id: -1 }` so two images with the same timestamp never swap places between pages
-- [ ] `GET /images` and `GET /images/:id` hide anything past `expiresAt`, even before the cleanup job (Phase 5) has deleted it
-- [ ] Frontend: a thumbnail-only gallery grid, ImageCard with an "Expires in 5h 32m" countdown, Pagination
-- [ ] Empty gallery: a "Try with a sample photo" button next to the upload zone. The client fetches the bundled sample (`client/public`) and sends it through the normal `POST /images` upload, so there's no server change and a first-time user can try the editor straight away
+- [x] `GET /images` (paginated), sorted by `{ createdAt: -1, _id: -1 }` so two images with the same timestamp never swap places between pages
+- [x] `GET /images` and `GET /images/:id` hide anything past `expiresAt`, even before the cleanup job (Phase 5) has deleted it
+- [x] Frontend: a thumbnail-only gallery grid, ImageCard with an "Expires in 5h 32m" countdown, Pagination
+- [x] Empty gallery: a "Try with a sample photo" button next to the upload zone. The client fetches the bundled sample (`client/public`) and sends it through the normal `POST /images` upload, so there's no server change and a first-time user can try the editor straight away
 
 **Done when:** you upload 12+ images; the grid loads only thumbnails with an expiry countdown and pages correctly; an image with `expiresAt` in the past is hidden; tests cover pagination and hiding.
 

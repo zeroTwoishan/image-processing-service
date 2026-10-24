@@ -22,3 +22,10 @@ export const loginSchema = z.object({
   username: z.string().trim().toLowerCase().min(1, 'Enter your username'),
   password: z.string().min(1, 'Enter your password'),
 });
+
+// Query strings are always text ("2"), so coerce to numbers. A cap on limit stops ?limit=100000 from
+// pulling a user's whole collection in one request.
+export const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
