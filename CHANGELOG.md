@@ -2,6 +2,13 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-25: Search basics
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Phase 6 | New item: `robots.txt`, `sitemap.xml` and canonical URLs for the public pages, checked with a Lighthouse SEO score of 100. Next to the existing link-preview item, because preview bots and crawlers read the raw `index.html` without running JavaScript. Ishan's call to keep it in Phase 6 rather than detour before Phase 5 |
+| 2 | Phase 7 | New item: the public "Try it" page gets a search-focused title and description and goes in the sitemap. It's the only page that can bring search traffic; everything else is behind the login |
+
 ### 2026-10-25: Storage moves from Cloudflare R2 to Supabase Storage
 
 | # | Section | Change |
