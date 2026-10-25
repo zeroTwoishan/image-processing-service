@@ -1,0 +1,6 @@
+# Never send these into the image: secrets, local photos, and Windows-built node_modules (npm ci builds Linux ones).
+.env
+node_modules
+uploads
+uploads-test
+test

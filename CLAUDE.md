@@ -56,7 +56,7 @@ Follow the outlines in PLAN.md → "Learning plan". For both topics, the order i
 - Finish by having Ishan explain "design a rate limiter" as if in an interview.
 
 **Deep dive 2: 12-hour auto-delete** (Phase 2a/2b + Phase 5)
-- Cover UTC timestamps, scheduled jobs (`setInterval` vs node-cron), files-then-rows ordering, idempotency, why MongoDB TTL indexes aren't enough, batching, and the R2 lifecycle safety net.
+- Cover UTC timestamps, scheduled jobs (`setInterval` vs node-cron), files-then-rows ordering, idempotency, why MongoDB TTL indexes aren't enough, batching, and a sweep for orphaned bucket files as a safety net.
 - Break it: set a very short TTL in development, run the job twice, and kill it halfway.
 
 ---
@@ -101,6 +101,6 @@ Run from the repo root unless noted. Docker Desktop must be running for the Mong
 
 ## Current status
 
-- Phases 0, 1, 2a, 2b and 3 are done (Done-when passed); the UI uses the Darkroom design (tokens in `client/src/index.css`; the full Claude Design export is in the gitignored `design-reference/` for later phases). Next: Phase 4 plan (cloud storage + first deploy), waiting for Ishan's OK. Client unit tests: `npm test` in `client/` (node:test).
+- Phases 0, 1, 2a, 2b and 3 are done (Done-when passed); the UI uses the Darkroom design (tokens in `client/src/index.css`; the full Claude Design export is in the gitignored `design-reference/` for later phases). Phase 4 in progress: code done and tested; storage is Supabase Storage over S3 (not R2, changed 2026-10-25); next is creating the Supabase project and public `images` bucket, then Atlas, Render and Vercel. Client unit tests: `npm test` in `client/` (node:test).
 - The project stays in `Projects/` (inside OneDrive) with Ishan's other projects. If `npm install` fails with `EPERM`/`EBUSY`, pause OneDrive sync and retry.
 - No open items left in PLAN.md.

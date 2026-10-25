@@ -1,5 +1,6 @@
 node_modules/
 .env
+*.local
 server/uploads/
 dist/
 coverage/

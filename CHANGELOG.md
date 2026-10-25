@@ -2,6 +2,14 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-25: Storage moves from Cloudflare R2 to Supabase Storage
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Status and decisions, Phase 4, Phase 6, Deployment | File storage is Supabase Storage instead of Cloudflare R2. R2 and Tigris needed a card Ishan's bank declines, and Azure for Students rejected the student check. Supabase's free plan needs no card, speaks the S3 API (so `s3Storage.js` stays, plus path-style and a region setting), serves public files from its CDN at a URL that fits `PUBLIC_ASSET_BASE/key`, and a public bucket with no policies can't be listed. Appwrite was rejected because its read permission also allows listing every file; Backblaze and EC2 need a card. Ishan's call |
+| 2 | Phase 4 | Built before the accounts: `s3Storage.js`, `STORAGE_DRIVER`, boot-time env checks, locked-down CORS with exposed rate-limit headers, `trust proxy`, Sharp limits, Dockerfile, `VITE_API_URL`, Vercel SPA rewrite; `npm audit fix` for known DoS bugs in multer, body-parser and zod |
+| 3 | Phase 6 | Supabase has no lifecycle rules: the safety net becomes the cleanup job also removing old files that no row points to; new item for a daily GitHub Actions ping so the free project doesn't pause |
+
 ### 2026-10-24: Phase 3 scope: live preview, Edit from original, no placeholder cache
 
 | # | Section | Change |

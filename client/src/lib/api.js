@@ -3,6 +3,10 @@
 
 const TOKEN_KEY = 'token';
 
+// Dev: empty, so requests go to /api on Vite, which proxies them to the API. Production: the deployed API's
+// address (VITE_API_URL, set on Vercel), because the client and the API live on different domains.
+const API_BASE = import.meta.env.VITE_API_URL ?? '';
+
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
   set: (token) => localStorage.setItem(TOKEN_KEY, token),
@@ -41,7 +45,6 @@ function toApiError(status, data, retryAfterHeader, sentToken) {
   });
 }
 
-// ponytail: relative /api works through the Vite proxy; Phase 4 adds the deployed API's base URL
 export async function api(path, { method = 'GET', body } = {}) {
   const headers = {};
   const token = tokenStore.get();
@@ -50,7 +53,7 @@ export async function api(path, { method = 'GET', body } = {}) {
 
   let res;
   try {
-    res = await fetch(`/api${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+    res = await fetch(`${API_BASE}/api${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
     throw networkError(); // fetch only throws when there's no response at all (server down, offline)
   }
@@ -70,7 +73,7 @@ export function uploadImage(file, onProgress) {
   return new Promise((resolve, reject) => {
     const token = tokenStore.get();
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/images');
+    xhr.open('POST', `${API_BASE}/api/images`);
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     // No Content-Type on purpose: for FormData the browser sets "multipart/form-data; boundary=…" itself.
     // Setting it by hand drops the boundary, and the server can't split the body into parts.

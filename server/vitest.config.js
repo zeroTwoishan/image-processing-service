@@ -11,6 +11,9 @@ export default defineConfig({
       BCRYPT_COST: '4',
       // Test uploads go to their own folder (wiped by the tests), never mixed with your real uploads/.
       UPLOAD_DIR: 'uploads-test',
+      // A made-up site, so the CORS tests can check who may call the API.
+      CLIENT_ORIGIN: 'http://client.test',
+      STORAGE_DRIVER: 'local',
     },
     // Test files share one database and clear it before each test, so run them one at a time.
     fileParallelism: false,

@@ -9,10 +9,11 @@ const root = path.resolve(import.meta.dirname, '../../..', env.UPLOAD_DIR);
 // so a file name like "../../index.js" can't escape the folder.
 const fullPath = (key) => path.join(root, key);
 
-// Files on this machine's disk. Phase 4 adds an R2 version with the same three methods.
+// Files on this machine's disk. s3Storage.js has the same three methods for a bucket.
 export default {
   root,
 
+  // contentType is for S3; the static file server works the type out from the extension.
   async save(key, buffer) {
     await fs.mkdir(path.dirname(fullPath(key)), { recursive: true });
     await fs.writeFile(fullPath(key), buffer);

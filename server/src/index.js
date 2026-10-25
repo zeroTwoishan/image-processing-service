@@ -1,6 +1,14 @@
 import { env } from './config/env.js'; // first import: validates env before anything else runs
 import { connectDb, disconnectDb } from './config/db.js';
+import sharp from 'sharp';
 import { createApp } from './app.js';
+
+// A small server (about 512 MB) can't afford Sharp's defaults: one thread per CPU core, each holding a big
+// image in memory, plus a cache of recent images. One image at a time is slower but doesn't get killed.
+if (env.NODE_ENV === 'production') {
+  sharp.concurrency(1);
+  sharp.cache(false);
+}
 
 try {
   await connectDb(env.MONGO_URI);

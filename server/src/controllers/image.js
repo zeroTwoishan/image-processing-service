@@ -18,7 +18,7 @@ const notExpired = () => ({ expiresAt: { $gt: new Date() } });
 // Saves both files, then the row. Shared by upload and transform, so the cleanup below exists exactly once.
 async function storeImage(file, thumbnail, fields) {
   try {
-    await Promise.all([storage.save(file.key, file.buffer), storage.save(thumbnail.key, thumbnail.buffer)]);
+    await Promise.all([storage.save(file.key, file.buffer, fields.mimeType), storage.save(thumbnail.key, thumbnail.buffer, 'image/webp')]);
     // "return await", not "return": without await, a failed create() would reject after we've left the try,
     // and the catch below would never run.
     return await Image.create({ ...fields, storageKey: file.key, thumbnailKey: thumbnail.key });

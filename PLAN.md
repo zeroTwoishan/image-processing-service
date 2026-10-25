@@ -25,7 +25,7 @@ We're using JavaScript end to end: Express on the backend, React + Vite + Tailwi
 | Auth | JWT (7-day) in localStorage + bcrypt | Frontend and API are on different origins, so cookies would need SameSite=None, credentialed CORS and CSRF handling |
 | Validation | Zod | Validates request bodies, and env vars at boot |
 | Uploads | Multer (memory storage) | Hands Sharp a buffer to inspect before anything is saved |
-| File storage | Local disk → Cloudflare R2 | Mongo stores storage keys only; URLs are built from an env base |
+| File storage | Local disk → Supabase Storage (S3-compatible) | Mongo stores storage keys only; URLs are built from an env base. Supabase, not Cloudflare R2: R2, Tigris and Azure for Students all failed at sign-up (card declined, student check failed); Supabase's free plan needs no card (changed 2026-10-25) |
 | Rate limiting | express-rate-limit, in-memory store | One package, no extra server; fine because we run a single API instance |
 | Transform cache | MongoDB unique index on `cacheKey` | A repeated transform returns the existing version; the index also blocks duplicates from parallel requests |
 | Queue | None | Sharp is fast enough to run in the request |
@@ -53,7 +53,7 @@ Everything runs in one Express process, backed by MongoDB and file storage. The 
                 │                               │
    ┌────────────▼─────────────┐    ┌────────────▼─────────────┐
    │ MongoDB                  │    │ File storage             │
-   │ users, image metadata    │    │ local disk → R2          │
+   │ users, image metadata    │    │ local disk → Supabase    │
    │ unique cacheKey index    │    │ originals, versions,     │
    │ (= transform cache)      │    │ thumbnails               │
    └──────────────────────────┘    └──────────────────────────┘
@@ -140,7 +140,7 @@ All routes live under `/api`, and every `/images` route needs `Authorization: Be
 
 **Account rules.** `username` is trimmed and stored in lowercase, so `Ishan` and `ishan` are the same account (3–30 characters: letters, numbers, `_`). `password` is 8–72 *bytes*, checked with `Buffer.byteLength`: bcrypt silently ignores everything after byte 72, so a longer password would give a false sense of security.
 
-**Image object.** Mongo stores `storageKey` and `thumbnailKey` only. Keys are random UUIDs (for example `originals/3f2c….jpg`), never built from `originalName`. The files are public (no login needed to open a URL), so the URLs must be impossible to guess. `url` and `thumbnailUrl` are built in `toJSON` from `PUBLIC_ASSET_BASE`, so moving to R2 or a new domain never rewrites rows. Still originals are re-encoded on upload (auto-oriented, EXIF stripped), so the stored pixels are upright and `width` and `height` are simply the stored size. `expiresAt` is upload time + 12 hours; after that the image is hidden, then deleted by the hourly cleanup.
+**Image object.** Mongo stores `storageKey` and `thumbnailKey` only. Keys are random UUIDs (for example `originals/3f2c….jpg`), never built from `originalName`. The files are public (no login needed to open a URL), so the URLs must be impossible to guess. `url` and `thumbnailUrl` are built in `toJSON` from `PUBLIC_ASSET_BASE`, so moving to Supabase or a new domain never rewrites rows. Still originals are re-encoded on upload (auto-oriented, EXIF stripped), so the stored pixels are upright and `width` and `height` are simply the stored size. `expiresAt` is upload time + 12 hours; after that the image is hidden, then deleted by the hourly cleanup.
 
 ```json
 { "id": "...", "originalName": "IMG_0420.jpg",
@@ -197,7 +197,7 @@ The app has five pages. Gallery and Image Detail sit behind a login guard. The 7
 - `ImageCard`: shows `thumbnailUrl` (never the full image), name, dimensions, size, an "Expires in 5h 32m" countdown, and a "version" badge when `parent` is set.
 - `Pagination`: Prev/Next plus a page count, synced to `?page=` in the URL.
 - `TransformPanel`: controls grouped in pipeline order (Rotate/Flip → Crop → Resize → Filters → Watermark → Output), with the order shown as numbered steps. For GIF/AVIF it notes that "animated images are flattened to the first frame". On a version it is replaced by "Edit from original", which opens the original with the panel prefilled from that version. Every change previews instantly in the browser (CSS), nothing is sent until Apply, and Apply sends only the fields you changed.
-- Download button: browsers ignore `<a download>` for files on another origin (R2 in production), so it fetches the file as a blob, then saves it through an object URL. This needs a CORS rule on the R2 bucket (Phase 4).
+- Download button: browsers ignore `<a download>` for files on another origin (Supabase in production), so it fetches the file as a blob, then saves it through an object URL. Supabase's public URLs already allow cross-origin GET; check it on the live site (Phase 4).
 - Error handling: `api.js` throws errors that carry `code`. The UI branches on `RATE_LIMITED`, `INVALID_CROP`, `TRANSFORM_ON_VERSION` and the other codes, never on message text.
 
 **User flow:** register → land on Gallery → upload → open an original → adjust the transforms → Apply → the new version appears under the original and you can download it.
@@ -296,17 +296,17 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 
 ### Phase 4: Cloud storage and first deploy
 
-- [ ] Cloudflare R2 bucket; `s3Storage.js` with `@aws-sdk/client-s3`
-- [ ] `STORAGE_DRIVER=local|s3` picks the implementation; `PUBLIC_ASSET_BASE` points at the bucket's public URL
-- [ ] Public bucket URL, or presigned GET URLs
-- [ ] R2 CORS rule allowing `GET` from the client's origin, so the download button's blob fetch works
-- [ ] No file migration: old local images expire within 12 hours anyway. Until then their URLs point at R2 and show as broken in dev, so just drop the dev database when you switch
-- [ ] Run the hosting check in the Deployment section, then do a rough first deploy: API on Render (Dockerfile) with Atlas + R2, client on Vercel. It doesn't need to look good; the point is to hit the deploy-only problems now, not in Phase 6
+- [x] Supabase project + public `darkroom-bucket` bucket with no storage policies, so anyone can open a file by its URL but nobody can list the bucket; `s3Storage.js` with `@aws-sdk/client-s3` (path-style, project region)
+- [x] `STORAGE_DRIVER=local|s3` picks the implementation; `PUBLIC_ASSET_BASE` points at the bucket's public URL
+- [x] Public bucket URL (not signed URLs: they expire, so cached links break). Checked 2026-10-25: with only the public key, every list request returns `[]`, while an exact file URL opens
+- [ ] Download works cross-origin from the client (the blob fetch needs the bucket to allow `GET` from the client's origin)
+- [x] No file migration: old local images expire within 12 hours anyway. Until then their URLs point at the bucket and show as broken in dev, so just drop the dev database when you switch
+- [ ] Run the hosting check in the Deployment section, then do a rough first deploy: API on Render (Dockerfile) with Atlas + Supabase Storage, client on Vercel. It doesn't need to look good; the point is to hit the deploy-only problems now, not in Phase 6
 - [ ] `app.set('trust proxy', 1)` in production, or every user shares the proxy's IP and one person's failed logins lock everyone out (the deep dive in Phase 5 explains why)
-- [ ] In production, `sharp.concurrency(1)` and `sharp.cache(false)` at boot, so Sharp fits in a small instance's RAM
-- [ ] `cors` allows only the Vercel URL (from an env var), and sets `exposedHeaders: ['Retry-After', 'RateLimit', 'RateLimit-Policy']`; cross-origin, the browser hides those headers from JavaScript otherwise and the rate-limit countdown breaks
+- [x] In production, `sharp.concurrency(1)` and `sharp.cache(false)` at boot, so Sharp fits in a small instance's RAM
+- [x] `cors` allows only the Vercel URL (from an env var), and sets `exposedHeaders: ['Retry-After', 'RateLimit', 'RateLimit-Policy']`; cross-origin, the browser hides those headers from JavaScript otherwise and the rate-limit countdown breaks
 
-**Done when:** switching `STORAGE_DRIVER` and `PUBLIC_ASSET_BASE` sends new uploads to R2 with no other code changes, existing rows are never rewritten, and on the live URL you can register, upload a 10 MB phone photo, transform it and download the result without the server crashing.
+**Done when:** switching `STORAGE_DRIVER` and `PUBLIC_ASSET_BASE` sends new uploads to Supabase with no other code changes, existing rows are never rewritten, and on the live URL you can register, upload a 10 MB phone photo, transform it and download the result without the server crashing.
 
 ### Phase 5: Caching, rate limiting and auto-delete
 
@@ -324,7 +324,8 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 ### Phase 6: Polish and deploy
 
 - [ ] `DELETE /images/:id`: deleting an original removes it plus its direct versions, with their files and thumbnails (the cache *is* the version rows, so nothing else to clean). Deleting a version removes only that version. There's one level only, since v1 has no chains
-- [ ] R2 lifecycle rule that deletes objects older than 1 day, as a safety net in case the cleanup job ever misses
+- [ ] Safety net for missed deletes (Supabase has no lifecycle rules): the cleanup job also removes bucket files older than 1 day that no row points to
+- [ ] Keep the Supabase project from pausing (it pauses after 7 days of low activity): a daily GitHub Actions ping, set up and checked once the project exists, as a safety net in case the cleanup job ever misses
 - [ ] Fill any gaps in test coverage, and run the tests in CI with GitHub Actions (a `mongo` service container gives the tests their database)
 - [ ] Loading and empty states, toasts, a mobile layout
 - [ ] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete, plus the privacy feature (hidden EXIF/GPS removed on upload; text stamped on the photo stays)
@@ -360,7 +361,7 @@ Every phase teaches something, and two topics get a full deep dive. For those, C
 | 2a | multipart/form-data and Multer; Buffers; image formats, EXIF and orientation; MongoDB schema design and indexes; why public file URLs must be unguessable |
 | 2b | Pagination with skip/limit and stable sort order; storing time in UTC |
 | 3 | Image pipelines with Sharp; pure functions and why they're easy to test; validation with Zod; escaping and injection |
-| 4 | Object storage (the S3 API, buckets, keys, public vs presigned URLs); the adapter pattern behind the storage interface; a first real deploy: reverse proxies, CORS, memory limits on small servers |
+| 4 | Object storage (the S3 API, buckets, keys, public vs signed URLs, why public must not mean listable); the adapter pattern behind the storage interface; a first real deploy: reverse proxies, CORS, memory limits on small servers |
 | 5 | **Deep dive 1: rate limiting. Deep dive 2: auto-delete.** Also hashing for cache keys, unique and partial indexes, race conditions |
 | 6 | CI with GitHub Actions, writing a README people actually read |
 
@@ -382,7 +383,7 @@ Every phase teaches something, and two topics get a full deep dive. For those, C
 - Idempotency: making a job safe to run twice
 - MongoDB TTL indexes, and why they aren't enough on their own
 - Batching big deletes; what happens if an image expires while a transform on it is running
-- R2 lifecycle rules as a safety net
+- Storage lifecycle rules as a safety net
 
 ### What to learn next (beyond this project)
 
@@ -411,7 +412,7 @@ Nothing is built yet, and every decision is now locked. We'll write the code tog
 | Redis + queue | None. Rate limits are in-memory (express-rate-limit), the cache is a MongoDB `cacheKey`, and transforms run inside the request | Locked |
 | Repo | One repo with `server/` + `client/` and a root `package.json` (concurrently) | Locked |
 | Version chaining | Transforms only on originals; a version as `:id` gives `400 TRANSFORM_ON_VERSION`. Recursive delete is a stretch idea | Locked |
-| Image retention | Images and their versions auto-delete 12 hours after upload (`IMAGE_TTL_HOURS=12`): hidden at expiry, removed by an hourly cleanup job, with an R2 lifecycle rule as a backup. User accounts are permanent (added 2026-10-08) | Locked |
+| Image retention | Images and their versions auto-delete 12 hours after upload (`IMAGE_TTL_HOURS=12`): hidden at expiry, removed by an hourly cleanup job, with a storage lifecycle rule as a backup. User accounts are permanent (added 2026-10-08) | Locked |
 
 **Open items**
 
@@ -431,13 +432,13 @@ Nothing is built yet, and every decision is now locked. We'll write the code tog
 
 ## Deployment and stretch ideas
 
-The backend is one web service plus MongoDB Atlas and Cloudflare R2, so a free deploy is realistic. The frontend goes on Vercel. The first deploy happens in Phase 4; Phase 6 redeploys the finished app.
+The backend is one web service plus MongoDB Atlas and Supabase Storage, so a free deploy is realistic. The frontend goes on Vercel. The first deploy happens in Phase 4; Phase 6 redeploys the finished app.
 
 | Host | What's free | Catch for this project |
 | --- | --- | --- |
-| Render | Web services, static sites | Free web services spin down after 15 minutes with no traffic and take about a minute to wake. Small instance (about 512 MB RAM), so the Sharp limits in Phase 4 matter. The disk is wiped on every deploy, so local storage can't be used there: R2 only |
+| Render | Web services, static sites | Free web services spin down after 15 minutes with no traffic and take about a minute to wake. Small instance (about 512 MB RAM), so the Sharp limits in Phase 4 matter. The disk is wiped on every deploy, so local storage can't be used there: Supabase only |
 | Railway | Free plan with $1 of credit a month, or a one-time $5 trial; Hobby is $5/month including $5 of usage | No sleep, but in practice Hobby, not free |
-| MongoDB Atlas, Cloudflare R2 | Free tiers | Check current limits when signing up |
+| MongoDB Atlas, Supabase | Free, no card | Supabase: 1 GB storage, 5 GB egress a month, 50 MB per file; a free project pauses after 7 days of low activity and is restored from the dashboard (checked 2026-10-25) |
 
 **Hosting check (Phase 4, before the first deploy):** choose Render free (accepting a slow first request after idle) or Railway Hobby (always on), and confirm the instance's current RAM. Since rate limits are in-memory, run exactly one instance. While a Render free server is asleep the hourly cleanup doesn't run; that's fine, because the job also runs at startup and expired images are hidden on read anyway.
 
