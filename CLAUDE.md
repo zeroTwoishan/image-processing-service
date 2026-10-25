@@ -101,6 +101,6 @@ Run from the repo root unless noted. Docker Desktop must be running for the Mong
 
 ## Current status
 
-- Phases 0, 1, 2a, 2b and 3 are done (Done-when passed); the UI uses the Darkroom design (tokens in `client/src/index.css`; the full Claude Design export is in the gitignored `design-reference/` for later phases). Phase 4 in progress: code done and tested; storage is Supabase Storage over S3 (not R2, changed 2026-10-25); next is creating the Supabase project and public `images` bucket, then Atlas, Render and Vercel. Client unit tests: `npm test` in `client/` (node:test).
+- Phases 0–4 are done (Done-when passed); the UI uses the Darkroom design (tokens in `client/src/index.css`; the full Claude Design export is in the gitignored `design-reference/` for later phases). Live: https://darkroom-ishan.vercel.app (Vercel) → https://darkroom-api-vtye.onrender.com (Render, Docker) → Atlas + Supabase Storage (`darkroom-bucket`). Production secrets live only in Render's environment settings. Next: Phase 5 plan, waiting for Ishan's OK. Client unit tests: `npm test` in `client/` (node:test).
 - The project stays in `Projects/` (inside OneDrive) with Ishan's other projects. If `npm install` fails with `EPERM`/`EBUSY`, pause OneDrive sync and retry.
 - No open items left in PLAN.md.

@@ -299,12 +299,14 @@ There are seven phases (Phase 2 is split into 2a and 2b), built in order, plus P
 - [x] Supabase project + public `darkroom-bucket` bucket with no storage policies, so anyone can open a file by its URL but nobody can list the bucket; `s3Storage.js` with `@aws-sdk/client-s3` (path-style, project region)
 - [x] `STORAGE_DRIVER=local|s3` picks the implementation; `PUBLIC_ASSET_BASE` points at the bucket's public URL
 - [x] Public bucket URL (not signed URLs: they expire, so cached links break). Checked 2026-10-25: with only the public key, every list request returns `[]`, while an exact file URL opens
-- [ ] Download works cross-origin from the client (the blob fetch needs the bucket to allow `GET` from the client's origin)
+- [x] Download works cross-origin from the client (the blob fetch needs the bucket to allow `GET` from the client's origin)
 - [x] No file migration: old local images expire within 12 hours anyway. Until then their URLs point at the bucket and show as broken in dev, so just drop the dev database when you switch
-- [ ] Run the hosting check in the Deployment section, then do a rough first deploy: API on Render (Dockerfile) with Atlas + Supabase Storage, client on Vercel. It doesn't need to look good; the point is to hit the deploy-only problems now, not in Phase 6
-- [ ] `app.set('trust proxy', 1)` in production, or every user shares the proxy's IP and one person's failed logins lock everyone out (the deep dive in Phase 5 explains why)
+- [x] Run the hosting check in the Deployment section, then do a rough first deploy: API on Render (Dockerfile) with Atlas + Supabase Storage, client on Vercel. It doesn't need to look good; the point is to hit the deploy-only problems now, not in Phase 6
+- [x] `app.set('trust proxy', 1)` in production, or every user shares the proxy's IP and one person's failed logins lock everyone out (the deep dive in Phase 5 explains why)
 - [x] In production, `sharp.concurrency(1)` and `sharp.cache(false)` at boot, so Sharp fits in a small instance's RAM
 - [x] `cors` allows only the Vercel URL (from an env var), and sets `exposedHeaders: ['Retry-After', 'RateLimit', 'RateLimit-Policy']`; cross-origin, the browser hides those headers from JavaScript otherwise and the rate-limit countdown breaks
+
+Live since 2026-10-25: client https://darkroom-ishan.vercel.app, API https://darkroom-api-vtye.onrender.com (Render free, Singapore), Atlas M0 and Supabase in Mumbai. Render was chosen over Railway: free, no card; the cost is a ~1 minute wake-up after 15 idle minutes.
 
 **Done when:** switching `STORAGE_DRIVER` and `PUBLIC_ASSET_BASE` sends new uploads to Supabase with no other code changes, existing rows are never rewritten, and on the live URL you can register, upload a 10 MB phone photo, transform it and download the result without the server crashing.
 
