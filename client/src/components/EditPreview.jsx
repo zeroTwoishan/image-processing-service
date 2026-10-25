@@ -38,7 +38,8 @@ export function EditPreview({ src, alt, width, height, t, cropping = false, onCr
   const keptBox = { left: pct(kept.x, frame.width), top: pct(kept.y, frame.height), width: pct(kept.width, frame.width), height: pct(kept.height, frame.height) };
 
   return (
-    <div className="grid h-[min(68dvh,720px)] min-h-72 place-items-center overflow-hidden rounded-lg border border-line bg-surface p-4 @container-size">
+    // Shorter on phones (38% of the screen), so the photo, the tool under it and the edit bar fit on one screen.
+    <div className="grid h-[38dvh] min-h-56 place-items-center lg:h-[min(68dvh,720px)] lg:min-h-72 overflow-hidden rounded-lg border border-line bg-surface p-4 @container-size">
       <div
         ref={frameRef}
         className="relative rounded-sm @container-size"

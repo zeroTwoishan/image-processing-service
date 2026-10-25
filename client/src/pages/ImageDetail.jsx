@@ -49,6 +49,7 @@ function PhotoPage({ id }) {
   const [rateLimit, setRateLimit] = useState({ seconds: 0, key: 0 });
   const [downloadError, setDownloadError] = useState(null);
   const [applySlot, setApplySlot] = useState(null); // header element the panel draws Apply into (a callback ref)
+  const [toolsSlot, setToolsSlot] = useState(null); // phone: under the photo, where the chosen tool is drawn
 
   useEffect(() => {
     // If we leave before the requests finish, ignore their late answers.
@@ -111,7 +112,7 @@ function PhotoPage({ id }) {
     setPhoto((p) => ({ ...p, image: withName(p.image), original: withName(p.original), versions: p.versions.map(withName) }));
   }
 
-  // <a download> is ignored for files on another origin (R2 from Phase 4), so fetch the bytes and save them
+  // <a download> is ignored for files on another origin (the storage bucket in production), so fetch the bytes and save them
   // through a temporary object URL, which is same-origin.
   async function download() {
     setDownloadError(null);
@@ -130,12 +131,13 @@ function PhotoPage({ id }) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-page flex-1 flex-col gap-4 px-4 pt-4 pb-28 sm:px-6 lg:px-8 lg:pb-16">
+    <main className="mx-auto flex w-full max-w-page flex-1 flex-col gap-4 px-4 pt-4 pb-40 sm:px-6 lg:px-8 lg:pb-16">
+      {/* pb-40 on phones: room for the edit bar fixed to the bottom of the screen, so nothing hides under it. */}
       <title>{image ? `${image.originalName} · Darkroom` : 'Photo · Darkroom'}</title>
 
       {/* One compact row, breadcrumb style, so the photo starts high on the page. */}
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <div className="flex min-w-0 items-center gap-2 text-sm">
+      <header className="flex items-center justify-between gap-x-3 sm:gap-x-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
           {/* Back to the gallery page you came from. Opened from a bookmark or shared link there is no state, so page 1. */}
           <Link
             to={`/${gallerySearch}`}
@@ -160,9 +162,10 @@ function PhotoPage({ id }) {
           )}
         </div>
         {image && (
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" icon={DownloadSimpleIcon} onClick={download}>
-              Download
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Icon only on small phones, so the header stays one row and the photo starts higher. */}
+            <Button variant="secondary" icon={DownloadSimpleIcon} onClick={download} className="max-sm:px-3">
+              <span className="max-sm:sr-only">Download</span>
             </Button>
             {/* Desktop: the edit panel draws its Apply button here, the first thing you see. Phones have it in the
                 panel's bottom bar instead, so this slot is hidden there. */}
@@ -183,7 +186,7 @@ function PhotoPage({ id }) {
 
       {image && (
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_var(--container-panel)] lg:items-start lg:gap-10">
-          <div className="flex min-w-0 flex-col gap-8">
+          <div className="flex min-w-0 flex-col gap-3 lg:gap-8">
             {isVersion ? (
               // Compare the version with the original it was made from (side by side if their shapes differ).
               <CompareSlider
@@ -198,18 +201,25 @@ function PhotoPage({ id }) {
               />
             ) : (
               // An original is the editing stage: edits preview on it, and the crop box is dragged on it.
-              <EditPreview
-                src={image.url}
-                alt={image.originalName}
-                width={image.width}
-                height={image.height}
-                t={transform}
-                edited={editing}
-                cropping={cropping}
-                onCropChange={(box) =>
-                  changeTransform({ ...transform, crop: { x: String(box.x), y: String(box.y), width: String(box.width), height: String(box.height) } })
-                }
-              />
+              // On a phone it sticks to the top of the screen, so the photo stays in view while you use the tools.
+              <>
+                <div className="max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-4 max-lg:bg-canvas max-lg:px-4 max-lg:pt-2 max-lg:pb-1 sm:max-lg:-mx-6 sm:max-lg:px-6">
+                  <EditPreview
+                    src={image.url}
+                    alt={image.originalName}
+                    width={image.width}
+                    height={image.height}
+                    t={transform}
+                    edited={editing}
+                    cropping={cropping}
+                    onCropChange={(box) =>
+                      changeTransform({ ...transform, crop: { x: String(box.x), y: String(box.y), width: String(box.width), height: String(box.height) } })
+                    }
+                  />
+                </div>
+                {/* Phone: the edit panel draws the chosen tool here, right under the photo (empty on desktop). */}
+                <div ref={setToolsSlot} className="lg:hidden" />
+              </>
             )}
 
             <VersionsStrip original={original} versions={versions} currentId={image.id} now={now} linkState={linkState} />
@@ -236,6 +246,7 @@ function PhotoPage({ id }) {
               cropping={cropping}
               onCroppingChange={setCropping}
               applySlot={applySlot}
+              toolsSlot={toolsSlot}
             />
           )}
         </div>
