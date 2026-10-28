@@ -15,10 +15,8 @@ jobs:
       mongo:
         image: mongo:8
         ports: ['27017:27017']
-        # Wait until Mongo answers before the tests start.
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 5s --health-timeout 5s --health-retries 10
+        # No container health check: on GitHub's runner it reported "unhealthy" 0.1 s after start, before Mongo
+        # could boot. The "Wait for MongoDB" step below waits for the port instead.
     defaults:
       run:
         working-directory: server
@@ -30,6 +28,8 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
+      - name: Wait for MongoDB
+        run: for i in $(seq 1 30); do (echo > /dev/tcp/localhost/27017) 2>/dev/null && exit 0; sleep 1; done; exit 1
       # vitest.config.js points the tests at mongodb://localhost:27017/image-processing-test (the container).
       - run: npm test
 
