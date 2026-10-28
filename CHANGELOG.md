@@ -9,7 +9,7 @@
 | 1 | Phase 6 | Delete uses the design's slide-to-delete (drag or arrow keys to the end) instead of a confirm dialog, and success shows the design's Toast ("Photo deleted", "v1 deleted", "Renamed"), handed across pages through navigation state |
 | 2 | Phase 6 | The orphan sweep deletes files older than max(1 day, 2 × `IMAGE_TTL_HOURS`) that no row points to, so a longer TTL can never make it delete a live photo's files. Storage gained a `list()` method for it |
 | 3 | Phase 6 → After the project | "Clean up local Docker" moved after Phase 7, whose tests still need MongoDB in Docker |
-| 4 | Phase 6 | CI runs server tests against a `mongo:8` service container and the client tests + build; a second workflow pings Supabase daily |
+| 4 | Phase 6 | CI runs server tests against a `mongo:7` service container and the client tests + build; a second workflow pings Supabase daily. Mongo 7, not 8, only in CI: GitHub's runners moved to Linux 6.19+, which MongoDB 8.0+ refuses to start on (SERVER-121912). Local Docker and Atlas stay on 8 |
 
 ### 2026-10-28: Phase 5 findings
 
