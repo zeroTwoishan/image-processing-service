@@ -10,13 +10,14 @@ on:
 
 jobs:
   server:
-    runs-on: ubuntu-latest
+    # shortcut: pinned to 24.04 because ubuntu-latest moved to Ubuntu 26, whose Linux 6.19+ kernel MongoDB 8 refuses
+    # to start on ("known incompatibility", SERVER-121912). Back to ubuntu-latest once a mongo:8 release fixes it.
+    runs-on: ubuntu-24.04
     services:
       mongo:
         image: mongo:8
         ports: ['27017:27017']
-        # No container health check: on GitHub's runner it reported "unhealthy" 0.1 s after start, before Mongo
-        # could boot. The "Wait for MongoDB" step below waits for the port instead.
+        # Waited for by the "Wait for MongoDB" step below (a port check) rather than a container health check.
     defaults:
       run:
         working-directory: server
