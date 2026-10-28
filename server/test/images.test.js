@@ -379,6 +379,75 @@ describe('POST /api/images/:id/transform', () => {
   it('401 without a token', async () => {
     expect((await request(app).post('/api/images/abc/transform').send({ transformations: { rotate: 90 } })).status).toBe(401);
   });
+
+  describe('cache', () => {
+    it('a repeated transform returns the existing version (200, same id, no new files)', async () => {
+      const token = await signUp();
+      const { id } = await uploadOriginal(token);
+      const first = await transform(token, id, { rotate: 90, crop: { x: 0, y: 0, width: 20, height: 10 } });
+      const filesAfterFirst = await storedFileCount();
+
+      // Same edits, keys in another order (top level and inside crop): still the same fingerprint.
+      const again = await transform(token, id, { crop: { height: 10, width: 20, y: 0, x: 0 }, rotate: 90 });
+
+      expect([first.status, again.status]).toEqual([201, 200]);
+      expect(again.body.image.id).toBe(first.body.image.id);
+      expect(again.body.image).not.toHaveProperty('cacheKey');
+      expect(await storedFileCount()).toBe(filesAfterFirst);
+    });
+
+    it('different edits, or the same edits on another photo, make new versions', async () => {
+      const token = await signUp();
+      const [a, b] = [await uploadOriginal(token), await uploadOriginal(token)]; // two originals: no "missing key" clash
+      const ids = [
+        (await transform(token, a.id, { rotate: 90 })).body.image.id,
+        (await transform(token, a.id, { rotate: 180 })).body.image.id,
+        (await transform(token, b.id, { rotate: 90 })).body.image.id,
+      ];
+      expect(new Set(ids).size).toBe(3);
+    });
+
+    it('identical transforms fired together make one version and leave no extra files', async () => {
+      const token = await signUp();
+      const { id } = await uploadOriginal(token);
+      const filesBefore = await storedFileCount();
+
+      // All three miss the cache (none has saved yet), all run Sharp, and the unique index lets one save.
+      const results = await Promise.all([1, 2, 3].map(() => transform(token, id, { rotate: 90 })));
+
+      expect(results.map((r) => r.status).sort()).toEqual([200, 200, 201]);
+      expect(new Set(results.map((r) => r.body.image.id)).size).toBe(1);
+      expect(await Image.countDocuments({ parent: id })).toBe(1);
+      expect(await storedFileCount()).toBe(filesBefore + 2); // one version + its thumbnail; the losers' copies were removed
+    });
+  });
+
+  describe('rate limit', () => {
+    it('the 11th transform in a minute gets 429 RATE_LIMITED, with Retry-After and RateLimit headers', async () => {
+      const token = await signUp();
+      const { id } = await uploadOriginal(token);
+      // 1 real transform, then 9 cache hits: cheap, and they still count.
+      const statuses = [];
+      for (let i = 0; i < 10; i++) statuses.push((await transform(token, id, { rotate: 90 })).status);
+      expect(statuses.every((s) => s === 200 || s === 201)).toBe(true);
+
+      const res = await transform(token, id, { rotate: 90 });
+      expect(res.status).toBe(429);
+      expect(res.body.error.code).toBe('RATE_LIMITED');
+      expect(Number(res.headers['retry-after'])).toBeGreaterThan(0);
+      expect(res.headers['ratelimit-policy']).toBe('10;w=60');
+    });
+
+    it('counts per user: one user hitting the limit doesn’t block another', async () => {
+      const [busy, other] = [await signUp('busy'), await signUp('other')];
+      const { id } = await uploadOriginal(busy);
+      for (let i = 0; i < 10; i++) await transform(busy, id, { rotate: 90 });
+      expect((await transform(busy, id, { rotate: 90 })).status).toBe(429);
+
+      const res = await transform(other, (await uploadOriginal(other)).id, { rotate: 90 });
+      expect(res.status).toBe(201);
+    });
+  });
 });
 
 describe('PATCH /api/images/:id (rename)', () => {

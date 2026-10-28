@@ -15,3 +15,17 @@ export const createAuthLimiter = () =>
     handler: (req, res, next) =>
       next(new ApiError(429, 'RATE_LIMITED', 'Too many attempts. Please wait a moment and try again.')),
   });
+
+// 10 transforms per minute per user: each one can cost a second of CPU on a 512 MB server.
+// Keyed by user, not IP: it runs after requireAuth, and a whole college network can share one IP.
+// Cache hits count too: still a request, and counting everything keeps the limit predictable.
+export const createTransformLimiter = () =>
+  rateLimit({
+    windowMs: 60_000,
+    limit: 10,
+    keyGenerator: (req) => req.userId,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    handler: (req, res, next) =>
+      next(new ApiError(429, 'RATE_LIMITED', 'Too many edits in a minute. Please wait a moment and try again.')),
+  });

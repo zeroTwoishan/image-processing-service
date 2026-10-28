@@ -2,6 +2,7 @@ import { env } from './config/env.js'; // first import: validates env before any
 import { connectDb, disconnectDb } from './config/db.js';
 import sharp from 'sharp';
 import { createApp } from './app.js';
+import { scheduleCleanup } from './services/cleanup.js';
 
 // A small server (about 512 MB) can't afford Sharp's defaults: one thread per CPU core, each holding a big
 // image in memory, plus a cache of recent images. One image at a time is slower but doesn't get killed.
@@ -22,9 +23,14 @@ const server = createApp().listen(env.PORT, () => {
   console.log(`API listening on http://localhost:${env.PORT}`);
 });
 
+// Deletes expired photos (files, then rows) now and every hour. Only the real server runs it; tests call
+// deleteExpiredImages() directly.
+const stopCleanup = scheduleCleanup();
+
 // Graceful shutdown. SIGTERM comes from Docker/Render when they stop us; SIGINT is Ctrl+C.
 function shutdown(signal) {
   console.log(`${signal} received, shutting down...`);
+  stopCleanup();
   // Stop accepting new connections; the callback runs once in-flight requests have finished.
   server.close(async () => {
     await disconnectDb();

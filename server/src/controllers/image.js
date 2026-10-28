@@ -5,6 +5,7 @@ import { Image } from '../models/Image.js';
 import { storage } from '../services/storage/index.js';
 import { prepareUpload } from '../services/upload.js';
 import { applyTransform } from '../services/transform.js';
+import { cacheKeyFor, findCachedVersion } from '../services/cache.js';
 import { makeThumbnail } from '../services/thumbnail.js';
 import { FORMATS } from '../services/formats.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -66,27 +67,41 @@ export async function transformImage(req, res) {
   }
 
   const { transformations } = req.body;
+  // Same photo, same edits: hand back the version we already made. 200, not 201: nothing new was created.
+  const cacheKey = cacheKeyFor(original._id, transformations);
+  const cached = await findCachedVersion(cacheKey);
+  if (cached) return res.json({ image: cached });
+
   // Throws INVALID_TRANSFORM / INVALID_CROP before anything is saved.
   const { buffer, meta } = await applyTransform(await storage.get(original.storageKey), transformations);
 
   const id = randomUUID();
-  const image = await storeImage(
-    { key: `versions/${id}.${meta.ext}`, buffer },
-    { key: `thumbnails/${id}.webp`, buffer: await makeThumbnail(buffer) },
-    {
-      owner: req.userId,
-      parent: original._id,
-      transformations, // stored, so every version says how it was made
-      originalName: original.originalName.replace(/\.[^.]*$/, '').slice(0, 250) + `.${meta.ext}`, // IMG_0420.jpg → IMG_0420.webp
-      mimeType: meta.mimeType,
-      format: meta.format,
-      size: meta.size,
-      width: meta.width,
-      height: meta.height,
-      animated: false, // transforms use the first frame only
-      expiresAt: original.expiresAt, // the whole family expires together
-    },
-  );
+  let image;
+  try {
+    image = await storeImage(
+      { key: `versions/${id}.${meta.ext}`, buffer },
+      { key: `thumbnails/${id}.webp`, buffer: await makeThumbnail(buffer) },
+      {
+        owner: req.userId,
+        parent: original._id,
+        transformations, // stored, so every version says how it was made
+        originalName: original.originalName.replace(/\.[^.]*$/, '').slice(0, 250) + `.${meta.ext}`, // IMG_0420.jpg → IMG_0420.webp
+        mimeType: meta.mimeType,
+        format: meta.format,
+        size: meta.size,
+        width: meta.width,
+        height: meta.height,
+        animated: false, // transforms use the first frame only
+        expiresAt: original.expiresAt, // the whole family expires together
+        cacheKey,
+      },
+    );
+  } catch (err) {
+    // We lost a race: an identical request saved this version while we were running Sharp, and the unique
+    // index refused our copy. storeImage has already removed our files, so return the winner's version.
+    if (err.code !== 11000 || !err.keyPattern?.cacheKey) throw err;
+    return res.json({ image: await findCachedVersion(cacheKey) });
+  }
   res.status(201).json({ image });
 }
 

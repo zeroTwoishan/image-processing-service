@@ -18,6 +18,9 @@ const imageSchema = new mongoose.Schema(
     animated: { type: Boolean, default: false },
     parent: { type: ObjectId, ref: 'Image', default: null }, // null = an original; set on versions (Phase 3)
     transformations: { type: Mixed, default: null },
+    // Versions only (services/cache.js). No default on purpose: originals must not have the field at all, or
+    // the unique index below would see a second original's null as a duplicate of the first's.
+    cacheKey: { type: String },
     // A point in time (UTC), not "12 hours": "expiresAt < now" is one indexed query, whatever the server's timezone.
     expiresAt: { type: Date, required: true },
   },
@@ -34,6 +37,7 @@ const imageSchema = new mongoose.Schema(
         delete ret.owner;
         delete ret.storageKey;
         delete ret.thumbnailKey;
+        delete ret.cacheKey; // an internal detail, like the storage keys
         return ret;
       },
     },
@@ -45,5 +49,9 @@ const imageSchema = new mongoose.Schema(
 imageSchema.index({ owner: 1, createdAt: -1, _id: -1 }); // gallery: my images, newest first (_id breaks ties)
 imageSchema.index({ owner: 1, parent: 1 }); // versions of one original (Phase 3)
 imageSchema.index({ expiresAt: 1 }); // cleanup job: everything already expired (Phase 5)
+// Transform cache: one version per key. Unique, so two identical requests racing each other can't both save
+// (the loser gets error E11000). Partial: only documents whose cacheKey is a string are in the index, so
+// originals (no key) never clash. A sparse index wouldn't do: it still indexes an explicit null.
+imageSchema.index({ cacheKey: 1 }, { unique: true, partialFilterExpression: { cacheKey: { $type: 'string' } } });
 
 export const Image = mongoose.model('Image', imageSchema);

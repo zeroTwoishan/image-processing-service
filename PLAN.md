@@ -312,14 +312,14 @@ Live since 2026-10-25: client https://darkroom-ishan.vercel.app, API https://dar
 
 ### Phase 5: Caching, rate limiting and auto-delete
 
-- [ ] Cache key = sha256 of `TRANSFORM_VERSION` + `imageId` + the sorted transformation JSON. Bump `TRANSFORM_VERSION` whenever the pipeline changes, so old results are never reused by mistake
-- [ ] Each saved version stores its `cacheKey`, with a unique *partial* index: `partialFilterExpression: { cacheKey: { $type: 'string' } }`. Don't give `cacheKey` a default of `null`: a sparse index would still index `null`, and the second original upload would fail with `E11000`
-- [ ] `services/cache.js`, a Mongo lookup: before running Sharp, find a version with the same `cacheKey` and return it (`200`)
-- [ ] Two identical requests at once: the second insert fails on the unique index (error `E11000`). Catch it, delete the files the losing request just saved, and return the version the first request saved
-- [ ] Transform rate limit with express-rate-limit (for example 10 per minute per user, so it runs after the auth middleware) that returns `429 RATE_LIMITED` with `Retry-After` (deep dive 1)
-- [ ] Cleanup job (`services/cleanup.js`), run once at startup and then every hour: find images past `expiresAt`, delete their files (original, thumbnail, versions) from storage first, then delete the rows. Work in batches; running it twice must be harmless (deep dive 2)
-- [ ] Frontend: a friendly "slow down" message with a countdown, triggered by `RATE_LIMITED`
-- [ ] Tests: repeat transform returns the same image ID; parallel identical requests create one version and leave no extra files; two originals upload fine (no `null` clash); the 11th request gets 429; cleanup removes expired files and rows and leaves fresh ones alone
+- [x] Cache key = sha256 of `TRANSFORM_VERSION` + `imageId` + the sorted transformation JSON. Bump `TRANSFORM_VERSION` whenever the pipeline changes, so old results are never reused by mistake
+- [x] Each saved version stores its `cacheKey`, with a unique *partial* index: `partialFilterExpression: { cacheKey: { $type: 'string' } }`. Don't give `cacheKey` a default of `null`: a sparse index would still index `null`, and the second original upload would fail with `E11000`
+- [x] `services/cache.js`, a Mongo lookup: before running Sharp, find a version with the same `cacheKey` and return it (`200`)
+- [x] Two identical requests at once: the second insert fails on the unique index (error `E11000`). Catch it, delete the files the losing request just saved, and return the version the first request saved
+- [x] Transform rate limit with express-rate-limit (for example 10 per minute per user, so it runs after the auth middleware) that returns `429 RATE_LIMITED` with `Retry-After` (deep dive 1)
+- [x] Cleanup job (`services/cleanup.js`), run once at startup and then every hour: find images past `expiresAt`, delete their files (original, thumbnail, versions) from storage first, then delete the rows. Work in batches; running it twice must be harmless (deep dive 2)
+- [x] Frontend: a friendly "slow down" message with a countdown, triggered by `RATE_LIMITED` (built in Phase 3: "Slow down. Try again in 0:42.", Apply locked until 0:00)
+- [x] Tests: repeat transform returns the same image ID; parallel identical requests create one version and leave no extra files; two originals upload fine (no `null` clash); the 11th request gets 429; cleanup removes expired files and rows and leaves fresh ones alone
 
 **Done when:** repeating a transform returns the existing version instantly, two identical requests fired together create one version, the 11th transform in a minute gets a 429, and an image past its expiry is gone from both storage and MongoDB within an hour.
 
@@ -387,7 +387,7 @@ Every phase teaches something, and two topics get a full deep dive. For those, C
 - Idempotency: making a job safe to run twice
 - MongoDB TTL indexes, and why they aren't enough on their own
 - Batching big deletes; what happens if an image expires while a transform on it is running
-- Storage lifecycle rules as a safety net
+- A safety net for anything the job misses: sweeping bucket files that no row points to (Supabase has no lifecycle rules)
 
 ### What to learn next (beyond this project)
 
@@ -429,6 +429,7 @@ Nothing is built yet, and every decision is now locked. We'll write the code tog
 
 - **localStorage token.** Any XSS bug on the frontend can read it. Accepted for v1: the frontend (Vercel) and the API are on different origins, and cookies would need `SameSite=None; Secure`, credentialed CORS and CSRF handling for no portfolio gain.
 - **Images auto-delete after 12 hours.** Users must download what they want to keep. In return, storage can't fill up, the free tiers stay safe, and nobody's photos sit on the server.
+- **A deleted photo can stay reachable on the CDN for up to 1 hour.** Supabase's free plan doesn't clear the CDN's copy when a file is deleted (paid Smart CDN does), so files are stored with `Cache-Control: max-age=3600`. Found in Phase 5: with the earlier one-year cache, cleaned-up photos still opened from the CDN. Only someone who already has the exact URL can see that leftover copy.
 - **Animated images are flattened.** GIF and AVIF upload fine, but a transform works on the first frame and returns a still. The UI says so.
 - **No version chaining.** You can only transform an original. To change a version, transform the original again with combined settings.
 - **In-memory rate limits.** Counters reset when the server restarts and aren't shared between instances. Fine while we run one API instance.

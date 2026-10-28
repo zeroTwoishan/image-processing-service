@@ -15,6 +15,10 @@ const SEPIA = [
 
 const DEFAULT_QUALITY = 80;
 
+// Part of every cache key (services/cache.js). Bump it whenever this pipeline's output changes (a new default
+// quality, a different sepia matrix...), so versions made by the old code are never reused for new requests.
+export const TRANSFORM_VERSION = 1;
+
 // The watermark goes inside an SVG, which is XML: an unescaped "<" or "&" makes Sharp fail to parse it (a 500),
 // and a crafted text could inject SVG elements. Escape at the boundary where text meets markup.
 const XML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };

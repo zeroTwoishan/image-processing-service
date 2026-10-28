@@ -17,12 +17,11 @@ const Bucket = env.S3_BUCKET;
 
 // Files in an S3-compatible bucket. Same three methods as localStorage.js, so nothing else changes.
 export default {
-  // The bucket serves files with whatever type they were stored with. A key is never reused for different
-  // bytes, so browsers may cache each file for a year (same as the local static server).
+  // The bucket serves files with whatever type they were stored with, and the CDN in front of it caches them
+  // for as long as Cache-Control says. Deleting a file does NOT clear the CDN's copy on Supabase's free plan,
+  // so a long cache would keep "deleted" photos online for months. 1 hour caps that, after the 12-hour expiry.
   async save(key, buffer, contentType) {
-    await client.send(
-      new PutObjectCommand({ Bucket, Key: key, Body: buffer, ContentType: contentType, CacheControl: 'public, max-age=31536000, immutable' }),
-    );
+    await client.send(new PutObjectCommand({ Bucket, Key: key, Body: buffer, ContentType: contentType, CacheControl: 'public, max-age=3600' }));
   },
 
   async get(key) {

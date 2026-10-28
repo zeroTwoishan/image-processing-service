@@ -2,6 +2,13 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-28: Phase 5 findings
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Known tradeoffs, Phase 4 storage | Files in the bucket are cached for 1 hour (`max-age=3600`), not a year. A real cleanup run showed deleted files still opening from Supabase's CDN, which the free plan doesn't purge on delete. Local disk keeps the long cache (no shared CDN) |
+| 2 | Phase 5 | The transform cache key needs no extra key sorting: Zod builds validated objects in the schema's field order, so `{ flip, rotate }` and `{ rotate, flip }` already give the same JSON. Proven by a test that stayed green with the sorting removed |
+
 ### 2026-10-25: Search basics
 
 | # | Section | Change |
