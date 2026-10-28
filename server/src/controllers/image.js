@@ -105,6 +105,18 @@ export async function transformImage(req, res) {
   res.status(201).json({ image });
 }
 
+// An original takes its versions with it (a version means nothing without its original); a version goes alone.
+// Files first, then rows, same as the cleanup job: a crash in between leaves rows that still point at their
+// files, so the cleanup finds them at expiry. A transform finishing during the delete can add one more version
+// row; it has the original's expiresAt, so the cleanup removes it too.
+export async function deleteImage(req, res) {
+  const image = await findOwnImage(req);
+  const family = image.parent ? [image] : [image, ...(await Image.find({ parent: image._id }))];
+  await Promise.all(family.flatMap((i) => [storage.remove(i.storageKey), storage.remove(i.thumbnailKey)]));
+  await Image.deleteMany({ _id: { $in: family.map((i) => i._id) } });
+  res.status(204).end();
+}
+
 // PATCH, not PUT: the request changes one field of the image, it doesn't replace the whole resource.
 export async function renameImage(req, res) {
   const image = await findOwnImage(req);

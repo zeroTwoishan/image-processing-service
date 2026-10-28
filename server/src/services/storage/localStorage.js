@@ -9,7 +9,7 @@ const root = path.resolve(import.meta.dirname, '../../..', env.UPLOAD_DIR);
 // so a file name like "../../index.js" can't escape the folder.
 const fullPath = (key) => path.join(root, key);
 
-// Files on this machine's disk. s3Storage.js has the same three methods for a bucket.
+// Files on this machine's disk. s3Storage.js has the same methods for a bucket.
 export default {
   root,
 
@@ -23,4 +23,16 @@ export default {
 
   // force: true → removing a file that's already gone is not an error, so cleanup can safely run twice.
   remove: (key) => fs.rm(fullPath(key), { force: true }),
+
+  // Every file, as { key, lastModified }, for the orphan sweep. No folder yet = no files.
+  async list() {
+    const entries = await fs.readdir(root, { recursive: true, withFileTypes: true }).catch(() => []);
+    const files = entries.filter((e) => e.isFile()).map((e) => path.join(e.parentPath, e.name));
+    return Promise.all(
+      files.map(async (file) => ({
+        key: path.relative(root, file).split(path.sep).join('/'), // "originals\x.jpg" on Windows → "originals/x.jpg"
+        lastModified: (await fs.stat(file)).mtime,
+      })),
+    );
+  },
 };

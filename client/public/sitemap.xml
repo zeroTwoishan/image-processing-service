@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The public pages. Everything else is behind the login. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://darkroom-ishan.vercel.app/login</loc></url>
+  <url><loc>https://darkroom-ishan.vercel.app/register</loc></url>
+</urlset>

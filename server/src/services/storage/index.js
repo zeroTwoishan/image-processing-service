@@ -1,5 +1,5 @@
 // The only place that decides where files live. Controllers import `storage` from here and call
-// save / get / remove; they never know whether it's local disk or a bucket.
+// save / get / remove / list; they never know whether it's local disk or a bucket.
 import { env } from '../../config/env.js';
 
 // Only the chosen driver is loaded, so dev never builds an S3 client it has no settings for.

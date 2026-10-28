@@ -5,12 +5,16 @@ import { api } from '../lib/api.js';
 import { cx, focusRing, ICON } from '../lib/ui';
 import { countChanges, EXTENSIONS, fromApiTransform, toApiTransform } from '../lib/transform';
 import { useNow } from '../hooks/useNow';
+import { useFlashToast } from '../hooks/useFlashToast';
+import { formatDuration } from '../lib/format';
 import { Button } from '../components/Button';
 import { CompareSlider } from '../components/CompareSlider';
 import { EditPreview } from '../components/EditPreview';
 import { EditableName } from '../components/EditableName';
 import { ImageDetails } from '../components/ImageDetails';
 import { Notice } from '../components/Notice';
+import { SlideToDelete } from '../components/SlideToDelete';
+import { Toast } from '../components/Toast';
 import { TransformPanel } from '../components/TransformPanel';
 import { VersionNotice } from '../components/VersionNotice';
 import { VersionsStrip } from '../components/VersionsStrip';
@@ -48,6 +52,9 @@ function PhotoPage({ id }) {
   const [errors, setErrors] = useState({}); // { crop?, general? } from the last Apply
   const [rateLimit, setRateLimit] = useState({ seconds: 0, key: 0 });
   const [downloadError, setDownloadError] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [toast, setToast, closeToast] = useFlashToast(); // "Renamed" here; "Version deleted" handed over from a version
   const [applySlot, setApplySlot] = useState(null); // header element the panel draws Apply into (a callback ref)
   const [toolsSlot, setToolsSlot] = useState(null); // phone: under the photo, where the chosen tool is drawn
 
@@ -110,6 +117,30 @@ function PhotoPage({ id }) {
     const { image: renamed } = await api(`/images/${image.id}`, { method: 'PATCH', body: { name: newName } });
     const withName = (img) => (img.id === renamed.id ? { ...img, originalName: renamed.originalName } : img);
     setPhoto((p) => ({ ...p, image: withName(p.image), original: withName(p.original), versions: p.versions.map(withName) }));
+    setToast({ message: 'Renamed', detail: renamed.originalName });
+  }
+
+  // replace: the deleted photo's page leaves history, so Back can't land on a 404. The toast travels with the
+  // navigation (useFlashToast), because this page is gone by the time it shows.
+  async function remove() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api(`/images/${image.id}`, { method: 'DELETE' });
+    } catch (err) {
+      if (!mounted.current) return;
+      // Already gone (it expired, or another tab deleted it): the outcome the user wanted, so carry on.
+      if (err.code !== 'NOT_FOUND') {
+        setDeleting(false);
+        setDeleteError(err.message);
+        return;
+      }
+    }
+    if (!mounted.current) return;
+    const done = { message: isVersion ? `${image.label} deleted` : 'Photo deleted', detail: image.originalName };
+    // A version goes back to its original; an original back to the gallery page you came from.
+    if (isVersion) navigate(`/images/${original.id}`, { replace: true, state: { ...linkState, toast: done } });
+    else navigate(`/${gallerySearch}`, { replace: true, state: { toast: done } });
   }
 
   // <a download> is ignored for files on another origin (the storage bucket in production), so fetch the bytes and save them
@@ -224,8 +255,20 @@ function PhotoPage({ id }) {
 
             <VersionsStrip original={original} versions={versions} currentId={image.id} now={now} linkState={linkState} />
 
-            <div className="border-t border-line pt-8">
+            <div className="grid gap-8 border-t border-line pt-8 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)] md:gap-10">
               <ImageDetails image={image} now={now} madeFrom={isVersion ? original.originalName : undefined} />
+
+              <section aria-labelledby="delete-heading" className="flex flex-col gap-3">
+                <h2 id="delete-heading" className="text-sm font-medium text-fg">
+                  Delete
+                </h2>
+                <p className="text-[13px] text-fg-subtle">
+                  Removes {isVersion ? `this version (${image.label})` : 'this photo and its versions'} now instead of in{' '}
+                  <span className="font-mono tabular-nums">{formatDuration(new Date(image.expiresAt) - now)}</span>.
+                </p>
+                <SlideToDelete label={image.originalName} onConfirm={remove} status={deleting ? 'deleting' : 'idle'} />
+                {deleteError && <Notice>{deleteError}</Notice>}
+              </section>
             </div>
           </div>
 
@@ -251,6 +294,8 @@ function PhotoPage({ id }) {
           )}
         </div>
       )}
+
+      <Toast open={Boolean(toast)} message={toast?.message} detail={toast?.detail} onClose={closeToast} aboveSheet={Boolean(image && !isVersion)} />
     </main>
   );
 }

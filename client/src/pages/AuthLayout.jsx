@@ -1,12 +1,18 @@
+import { useLocation } from 'react-router';
+
 /**
  * Quiet frame for Login and Register: one narrow, left-aligned column a little above the middle of the screen,
  * plus a before/after sample photo on wide screens. (From design-reference; the Navbar comes from App's Layout.)
  */
 export default function AuthLayout({ title, lead, children, footer }) {
+  const { pathname } = useLocation();
   return (
     <main className="mx-auto grid w-full max-w-page flex-1 content-start px-4 sm:px-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:gap-16 lg:px-8 xl:gap-24">
       {/* React 19 hoists <title> into <head>; each page gets its own tab/screen-reader title */}
       <title>{`${title} · Darkroom`}</title>
+      {/* The one real address of this page (React 19 hoists it into <head>): Vercel also serves every deploy
+          at a preview address, and search engines shouldn't count those as duplicates. */}
+      <link rel="canonical" href={`https://darkroom-ishan.vercel.app${pathname}`} />
       <div className="flex w-full max-w-form flex-col gap-8 pt-12 pb-16 sm:pt-[14vh]">
         <header className="flex flex-col gap-3">
           <h1 className="font-display text-[44px] leading-[1.1] tracking-[-0.03em] text-fg">{title}</h1>

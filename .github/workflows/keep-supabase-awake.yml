@@ -1,0 +1,27 @@
+# Supabase pauses a free project after 7 days of low activity, and then uploads fail. One small request a day
+# keeps it awake through quiet weeks. Listing buckets makes the Storage API query the project's database,
+# which is the kind of activity that counts.
+# Needs one repository secret: SUPABASE_PUBLISHABLE_KEY (Settings → Secrets and variables → Actions).
+# The publishable key is public by design (it's meant for browsers); it's a secret here only to keep it out
+# of the repo's files.
+name: Keep Supabase awake
+
+on:
+  schedule:
+    - cron: '17 6 * * *' # every day at 06:17 UTC; off the hour, when GitHub's scheduler is busiest
+  workflow_dispatch: # a "Run workflow" button, to test it by hand
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Storage
+        env:
+          SUPABASE_URL: https://okpnqlknqwqzsscbsnzd.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Add the SUPABASE_PUBLISHABLE_KEY secret: Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          curl --fail-with-body -sS "$SUPABASE_URL/storage/v1/bucket" -H "apikey: $SUPABASE_PUBLISHABLE_KEY"

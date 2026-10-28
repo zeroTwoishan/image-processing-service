@@ -3,12 +3,14 @@ import { useSearchParams } from 'react-router';
 import { ArrowClockwiseIcon, ImagesIcon, SparkleIcon } from '@phosphor-icons/react';
 import { api, uploadImage } from '../lib/api.js';
 import { useNow } from '../hooks/useNow';
+import { useFlashToast } from '../hooks/useFlashToast';
 import { ICON } from '../lib/ui';
 import { Button } from '../components/Button';
 import { Notice } from '../components/Notice';
 import { Pagination } from '../components/Pagination';
 import { PhotoGrid } from '../components/PhotoGrid';
 import { PhotoGridSkeleton } from '../components/PhotoGridSkeleton';
+import { Toast } from '../components/Toast';
 import { UploadDropzone } from '../components/UploadDropzone';
 
 const PAGE_SIZE = 12;
@@ -21,6 +23,7 @@ export default function Gallery() {
   const [list, setList] = useState({ images: null, pagination: null, loading: true, failed: false });
   const [reloadKey, setReloadKey] = useState(0); // bump to refetch the same page (after an upload)
   const [upload, setUpload] = useState({ status: 'idle', progress: 0, file: null, error: null });
+  const [toast, , closeToast] = useFlashToast(); // "Photo deleted", handed over by the photo's page
 
   const goTo = (p) => {
     setSearchParams(p > 1 ? { page: String(p) } : {});
@@ -139,6 +142,8 @@ export default function Gallery() {
           </>
         )}
       </section>
+
+      <Toast open={Boolean(toast)} message={toast?.message} detail={toast?.detail} onClose={closeToast} />
     </main>
   );
 }

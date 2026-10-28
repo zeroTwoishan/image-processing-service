@@ -450,6 +450,56 @@ describe('POST /api/images/:id/transform', () => {
   });
 });
 
+describe('DELETE /api/images/:id', () => {
+  const remove = (token, id) => request(app).delete(`/api/images/${id}`).set('Authorization', `Bearer ${token}`);
+  const uploadOriginal = async (token) => (await upload(token, await solid(40, 30).jpeg().toBuffer())).body.image;
+
+  it('deleting an original removes it and its versions: rows and every file', async () => {
+    const token = await signUp();
+    const keep = await uploadOriginal(token); // another photo, untouched
+    const filesBefore = await storedFileCount();
+    const original = await uploadOriginal(token);
+    await transform(token, original.id, { rotate: 90 });
+    await transform(token, original.id, { filters: { grayscale: true } });
+
+    const res = await remove(token, original.id);
+
+    expect(res.status).toBe(204);
+    expect(await Image.countDocuments({ $or: [{ _id: original.id }, { parent: original.id }] })).toBe(0);
+    expect(await storedFileCount()).toBe(filesBefore); // the original, 2 versions and 3 thumbnails are all gone
+    expect(await Image.exists({ _id: keep.id })).toBeTruthy();
+  });
+
+  it('deleting a version removes only that version', async () => {
+    const token = await signUp();
+    const original = await uploadOriginal(token);
+    const first = (await transform(token, original.id, { rotate: 90 })).body.image;
+    const second = (await transform(token, original.id, { rotate: 180 })).body.image;
+    const filesBefore = await storedFileCount();
+
+    expect((await remove(token, first.id)).status).toBe(204);
+
+    const left = await request(app).get(`/api/images/${original.id}`).set('Authorization', `Bearer ${token}`);
+    expect(left.body.versions.map((v) => v.id)).toEqual([second.id]);
+    expect(await storedFileCount()).toBe(filesBefore - 2); // the version and its thumbnail
+  });
+
+  it('404 for someone else’s photo (and it isn’t deleted), and for a photo that’s already gone', async () => {
+    const original = await uploadOriginal(await signUp('ishan'));
+    const stranger = await signUp('stranger');
+    expect((await remove(stranger, original.id)).status).toBe(404);
+    expect(await Image.exists({ _id: original.id })).toBeTruthy();
+
+    const owner = (await request(app).post('/api/login').send({ username: 'ishan', password: 'correct horse' })).body.token;
+    expect((await remove(owner, original.id)).status).toBe(204);
+    expect((await remove(owner, original.id)).status).toBe(404);
+  });
+
+  it('401 without a token', async () => {
+    expect((await request(app).delete('/api/images/abc')).status).toBe(401);
+  });
+});
+
 describe('PATCH /api/images/:id (rename)', () => {
   const rename = (token, id, body) => request(app).patch(`/api/images/${id}`).set('Authorization', `Bearer ${token}`).send(body);
 

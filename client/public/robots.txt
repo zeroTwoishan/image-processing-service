@@ -1,0 +1,5 @@
+# Only the sign-in pages are public. Photo pages need a login and are private, so crawlers skip them.
+User-agent: *
+Disallow: /images/
+
+Sitemap: https://darkroom-ishan.vercel.app/sitemap.xml

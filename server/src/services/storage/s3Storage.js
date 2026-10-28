@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { env } from '../../config/env.js';
 
 // Supabase Storage speaks the S3 API, so the AWS SDK works with it: only the endpoint and keys change.
@@ -15,7 +15,7 @@ const client = new S3Client({
 });
 const Bucket = env.S3_BUCKET;
 
-// Files in an S3-compatible bucket. Same three methods as localStorage.js, so nothing else changes.
+// Files in an S3-compatible bucket. Same methods as localStorage.js, so nothing else changes.
 export default {
   // The bucket serves files with whatever type they were stored with, and the CDN in front of it caches them
   // for as long as Cache-Control says. Deleting a file does NOT clear the CDN's copy on Supabase's free plan,
@@ -32,5 +32,18 @@ export default {
   // Deleting a key that doesn't exist succeeds in S3, so cleanup can safely run twice (like force: true locally).
   async remove(key) {
     await client.send(new DeleteObjectCommand({ Bucket, Key: key }));
+  },
+
+  // Every file, as { key, lastModified }, for the orphan sweep. S3 returns at most 1000 keys per request,
+  // with a token for the next page.
+  async list() {
+    const files = [];
+    let ContinuationToken;
+    do {
+      const page = await client.send(new ListObjectsV2Command({ Bucket, ContinuationToken }));
+      for (const { Key, LastModified } of page.Contents ?? []) files.push({ key: Key, lastModified: LastModified });
+      ContinuationToken = page.NextContinuationToken;
+    } while (ContinuationToken);
+    return files;
   },
 };

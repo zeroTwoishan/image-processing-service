@@ -6,7 +6,7 @@ import sharp from 'sharp';
 import { createApp } from '../src/app.js';
 import { Image } from '../src/models/Image.js';
 import { storage } from '../src/services/storage/index.js';
-import { deleteExpiredImages } from '../src/services/cleanup.js';
+import { deleteExpiredImages, deleteOrphanFiles } from '../src/services/cleanup.js';
 import { useTestDb } from './db.js';
 
 useTestDb();
@@ -99,5 +99,29 @@ describe('deleteExpiredImages', () => {
 
     expect(await deleteExpiredImages()).toBe(120);
     expect(await Image.countDocuments()).toBe(0);
+  });
+});
+
+describe('deleteOrphanFiles', () => {
+  // A file as if written `daysAgo` days ago.
+  async function fileFrom(key, daysAgo) {
+    await storage.save(key, Buffer.from('x'), 'text/plain');
+    const when = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+    await fs.utimes(`${storage.root}/${key}`, when, when);
+  }
+
+  it('deletes old files that no row points to, and keeps used files and new ones', async () => {
+    const token = await signUp();
+    const live = await Image.findById((await uploadPhoto(token)).id).lean();
+    // The live photo's files, made to look old: still kept, because a row points at them.
+    for (const key of [live.storageKey, live.thumbnailKey]) {
+      const when = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      await fs.utimes(`${storage.root}/${key}`, when, when);
+    }
+    await fileFrom('originals/leftover-from-a-crash.jpg', 2); // old and unused: the one to delete
+    await fileFrom('originals/upload-in-progress.jpg', 0); // unused but new: its row may be about to be saved
+
+    expect(await deleteOrphanFiles()).toBe(1);
+    expect((await storedKeys()).sort()).toEqual([fileName(live.storageKey), fileName(live.thumbnailKey), 'upload-in-progress.jpg'].sort());
   });
 });

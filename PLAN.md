@@ -325,17 +325,16 @@ Live since 2026-10-25: client https://darkroom-ishan.vercel.app, API https://dar
 
 ### Phase 6: Polish and deploy
 
-- [ ] `DELETE /images/:id`: deleting an original removes it plus its direct versions, with their files and thumbnails (the cache *is* the version rows, so nothing else to clean). Deleting a version removes only that version. There's one level only, since v1 has no chains
-- [ ] Safety net for missed deletes (Supabase has no lifecycle rules): the cleanup job also removes bucket files older than 1 day that no row points to
-- [ ] Keep the Supabase project from pausing (it pauses after 7 days of low activity): a daily GitHub Actions ping, set up and checked once the project exists
-- [ ] Fill any gaps in test coverage, and run the tests in CI with GitHub Actions (a `mongo` service container gives the tests their database)
-- [ ] Loading and empty states, toasts, a mobile layout
-- [ ] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete, plus the privacy feature (hidden EXIF/GPS removed on upload; text stamped on the photo stays)
-- [ ] A ~5-second GIF at the top of the README: upload → transform → before/after → download. Recruiters skim READMEs; the GIF shows the app working before they read a word
-- [ ] Favicon (SVG, plus a PNG fallback) and link-preview tags in `index.html`: `<meta name="description">`, `og:title`, `og:description`, `og:image` (a 1200×630 `og.png`) and `twitter:card`, so the live link shows a proper card on LinkedIn and in chats. Check it with a link-preview tester before sharing
+- [x] `DELETE /images/:id`: deleting an original removes it plus its direct versions, with their files and thumbnails (the cache *is* the version rows, so nothing else to clean). Deleting a version removes only that version. There's one level only, since v1 has no chains
+- [x] Safety net for missed deletes (Supabase has no lifecycle rules): the cleanup job also removes bucket files older than 1 day (or twice the TTL, whichever is longer) that no row points to
+- [ ] Keep the Supabase project from pausing (it pauses after 7 days of low activity): a daily GitHub Actions ping (`keep-supabase-awake.yml`); needs the `SUPABASE_PUBLISHABLE_KEY` repository secret, then one manual run to check it
+- [x] Fill any gaps in test coverage, and run the tests in CI with GitHub Actions (a `mongo` service container gives the tests their database)
+- [x] Loading and empty states, toasts, a mobile layout (delete is the design's slide-to-delete, so a stray tap can't delete a photo)
+- [x] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete, plus the privacy feature (hidden EXIF/GPS removed on upload; text stamped on the photo stays)
+- [x] A ~5-second GIF at the top of the README: upload → transform → before/after → download. Recruiters skim READMEs; the GIF shows the app working before they read a word
+- [x] Favicon (SVG, plus a PNG fallback) and link-preview tags in `index.html`: `<meta name="description">`, `og:title`, `og:description`, `og:image` (a 1200×630 `og.png`) and `twitter:card`, so the live link shows a proper card on LinkedIn and in chats. Check it with a link-preview tester before sharing
 - [ ] Search basics for the public pages: `robots.txt` (allow the public pages, disallow `/images/`), a `sitemap.xml` that lists them, and a canonical URL on each one pointing at `https://darkroom-ishan.vercel.app`, so Vercel's preview addresses don't count as duplicates. Check: Lighthouse SEO score of 100. Private pages sit behind the login, so they can't be indexed and that's intended
-- [ ] Redeploy the finished app to the host chosen in Phase 4
-- [ ] Clean up local Docker once the project is done: `docker compose down -v` (removes the Mongo container and its data volume), `docker system prune -a` (removes downloaded images), then uninstall Docker Desktop if nothing else needs it
+- [x] Redeploy the finished app to the host chosen in Phase 4
 
 **Done when:** deleting an original leaves no orphaned files, and there's a live URL you can put on your resume and portfolio.
 
@@ -353,6 +352,10 @@ Visitors can try the editor without an account; nothing they upload is stored. B
 - [ ] Tests: guest transform returns an image and writes nothing to Mongo or storage; the guest limit gives 429
 
 **Done when:** a logged-out visitor can transform and download a photo with nothing saved on the server, and the nudge appears once after the first download and is easy to dismiss.
+
+### After the project
+
+- [ ] Clean up local Docker once the project is done (moved here from Phase 6: Phase 7's tests still need it): `docker compose down -v` (removes the Mongo container and its data volume), `docker system prune -a` (removes downloaded images), then uninstall Docker Desktop if nothing else needs it
 
 ## Learning plan
 

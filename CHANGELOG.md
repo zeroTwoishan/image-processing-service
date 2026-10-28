@@ -2,6 +2,15 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-10-28: Phase 6 decisions
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Phase 6 | Delete uses the design's slide-to-delete (drag or arrow keys to the end) instead of a confirm dialog, and success shows the design's Toast ("Photo deleted", "v1 deleted", "Renamed"), handed across pages through navigation state |
+| 2 | Phase 6 | The orphan sweep deletes files older than max(1 day, 2 × `IMAGE_TTL_HOURS`) that no row points to, so a longer TTL can never make it delete a live photo's files. Storage gained a `list()` method for it |
+| 3 | Phase 6 → After the project | "Clean up local Docker" moved after Phase 7, whose tests still need MongoDB in Docker |
+| 4 | Phase 6 | CI runs server tests against a `mongo:8` service container and the client tests + build; a second workflow pings Supabase daily |
+
 ### 2026-10-28: Phase 5 findings
 
 | # | Section | Change |
