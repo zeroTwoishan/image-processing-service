@@ -10,12 +10,13 @@ on:
 
 jobs:
   server:
-    # shortcut: pinned to 24.04 because ubuntu-latest moved to Ubuntu 26, whose Linux 6.19+ kernel MongoDB 8 refuses
-    # to start on ("known incompatibility", SERVER-121912). Back to ubuntu-latest once a mongo:8 release fixes it.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     services:
       mongo:
-        image: mongo:8
+        # shortcut: MongoDB 7 here, 8 on your laptop and Atlas. GitHub's runners now use Linux 6.19+, which
+        # MongoDB 8.0+ refuses to start on (a memory-allocator bug, SERVER-121912). The app uses nothing 8-only.
+        # Back to mongo:8 once a release starts on these runners.
+        image: mongo:7
         ports: ['27017:27017']
         # Waited for by the "Wait for MongoDB" step below (a port check) rather than a container health check.
     defaults:
