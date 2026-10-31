@@ -312,7 +312,7 @@ Live since 2026-10-25: client https://darkroom-ishan.vercel.app, API https://dar
 
 ### Phase 5: Caching, rate limiting and auto-delete
 
-- [x] Cache key = sha256 of `TRANSFORM_VERSION` + `imageId` + the sorted transformation JSON. Bump `TRANSFORM_VERSION` whenever the pipeline changes, so old results are never reused by mistake
+- [x] Cache key = sha256 of `TRANSFORM_VERSION` + `imageId` + the validated transformation JSON (Zod already outputs keys in schema order, so no extra sorting; see CHANGELOG 2026-10-28). Bump `TRANSFORM_VERSION` whenever the pipeline changes, so old results are never reused by mistake
 - [x] Each saved version stores its `cacheKey`, with a unique *partial* index: `partialFilterExpression: { cacheKey: { $type: 'string' } }`. Don't give `cacheKey` a default of `null`: a sparse index would still index `null`, and the second original upload would fail with `E11000`
 - [x] `services/cache.js`, a Mongo lookup: before running Sharp, find a version with the same `cacheKey` and return it (`200`)
 - [x] Two identical requests at once: the second insert fails on the unique index (error `E11000`). Catch it, delete the files the losing request just saved, and return the version the first request saved
@@ -327,13 +327,13 @@ Live since 2026-10-25: client https://darkroom-ishan.vercel.app, API https://dar
 
 - [x] `DELETE /images/:id`: deleting an original removes it plus its direct versions, with their files and thumbnails (the cache *is* the version rows, so nothing else to clean). Deleting a version removes only that version. There's one level only, since v1 has no chains
 - [x] Safety net for missed deletes (Supabase has no lifecycle rules): the cleanup job also removes bucket files older than 1 day (or twice the TTL, whichever is longer) that no row points to
-- [ ] Keep the Supabase project from pausing (it pauses after 7 days of low activity): a daily GitHub Actions ping (`keep-supabase-awake.yml`); needs the `SUPABASE_PUBLISHABLE_KEY` repository secret, then one manual run to check it
+- [x] Keep the Supabase project from pausing (it pauses after 7 days of low activity): a daily GitHub Actions ping (`keep-supabase-awake.yml`); needs the `SUPABASE_PUBLISHABLE_KEY` repository secret, then one manual run to check it (secret added, manual run green on 2026-11-01)
 - [x] Fill any gaps in test coverage, and run the tests in CI with GitHub Actions (a `mongo` service container gives the tests their database)
 - [x] Loading and empty states, toasts, a mobile layout (delete is the design's slide-to-delete, so a stray tap can't delete a photo)
 - [x] README with screenshots, an API table and Known tradeoffs, including the localStorage/XSS risk and the 12-hour auto-delete, plus the privacy feature (hidden EXIF/GPS removed on upload; text stamped on the photo stays)
 - [x] A ~5-second GIF at the top of the README: upload → transform → before/after → download. Recruiters skim READMEs; the GIF shows the app working before they read a word
 - [x] Favicon (SVG, plus a PNG fallback) and link-preview tags in `index.html`: `<meta name="description">`, `og:title`, `og:description`, `og:image` (a 1200×630 `og.png`) and `twitter:card`, so the live link shows a proper card on LinkedIn and in chats. Check it with a link-preview tester before sharing
-- [ ] Search basics for the public pages: `robots.txt` (allow the public pages, disallow `/images/`), a `sitemap.xml` that lists them, and a canonical URL on each one pointing at `https://darkroom-ishan.vercel.app`, so Vercel's preview addresses don't count as duplicates. Check: Lighthouse SEO score of 100. Private pages sit behind the login, so they can't be indexed and that's intended
+- [x] Search basics for the public pages: `robots.txt` (allow the public pages, disallow `/images/`), a `sitemap.xml` that lists them, and a canonical URL on each one pointing at `https://darkroom-ishan.vercel.app`, so Vercel's preview addresses don't count as duplicates. Check: Lighthouse SEO score of 100 (scored 100 on `/login`). Private pages sit behind the login, so they can't be indexed and that's intended
 - [x] Redeploy the finished app to the host chosen in Phase 4
 
 **Done when:** deleting an original leaves no orphaned files, and there's a live URL you can put on your resume and portfolio.
