@@ -55,9 +55,15 @@ export async function prepareUpload(buffer) {
       thumbnail: { key: `thumbnails/${id}.webp`, buffer: thumbnail },
     };
   } catch (err) {
-    if (err instanceof ApiError) throw err;
-    // Every other failure here is Sharp refusing the bytes we were given, so it's the upload's fault, not ours.
-    if (/pixel limit/i.test(err.message)) throw tooManyPixels();
-    throw unsupported();
+    throw toUploadError(err);
   }
+}
+
+// Every failure while reading an uploaded file is Sharp refusing the bytes we were given, so it's the upload's
+// fault, not ours: a 400/413 with our codes, not a 500. ApiErrors (INVALID_CROP, …) pass through unchanged.
+// Also used by guest transforms (controllers/guest.js), which read the uploaded bytes straight away.
+export function toUploadError(err) {
+  if (err instanceof ApiError) return err;
+  if (/pixel limit/i.test(err.message)) return tooManyPixels();
+  return unsupported();
 }

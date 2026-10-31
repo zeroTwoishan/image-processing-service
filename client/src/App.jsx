@@ -8,6 +8,13 @@ import Register from './pages/Register.jsx';
 import Gallery from './pages/Gallery.jsx';
 import ImageDetail from './pages/ImageDetail.jsx';
 import NotFound from './pages/NotFound.jsx';
+import TryIt from './pages/TryIt.jsx';
+
+// "/" is your gallery when you're logged in, and the "Try it" editor when you're not.
+function Home() {
+  const { user } = useAuth();
+  return user ? <Gallery /> : <TryIt />;
+}
 
 // Every page gets the navbar; <Outlet /> is where the matched page renders.
 function Layout() {
@@ -28,9 +35,9 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/" element={<Home />} />
         {/* Everything inside here needs a logged-in user */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Gallery />} />
           <Route path="/images/:id" element={<ImageDetail />} />
         </Route>
         <Route path="*" element={<NotFound />} />

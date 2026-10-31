@@ -121,6 +121,7 @@ All routes live under `/api`, and every `/images` route needs `Authorization: Be
 | POST | `/api/images/:id/transform` | JSON `{ transformations }` (below) | `201 { image }` new version; `200 { image }` when the same transform already exists (phase 5); `400 TRANSFORM_ON_VERSION` if `:id` isn't an original | 3 |
 | PATCH | `/api/images/:id` | JSON `{ name }` (1–200 chars, no slashes or control characters; no extension) | `200 { image }`; `originalName` becomes `name` + the real extension of the stored format, so downloads always open | 3 |
 | DELETE | `/api/images/:id` | — | `204`; an original takes its direct versions with it | 6 |
+| POST | `/api/guest/transform` | multipart: field `image` + field `transformations` (the JSON above, as text); no login | `200` with the edited image's bytes (`Content-Type` of the output format, `Cache-Control: no-store`); nothing stored; 5 per minute per IP | 7 |
 
 **Error codes**
 
@@ -342,14 +343,14 @@ Live since 2026-10-25: client https://darkroom-ishan.vercel.app, API https://dar
 
 Visitors can try the editor without an account; nothing they upload is stored. Built after Phase 6 because it reuses Phase 3's `applyTransform` and TransformPanel and needs Phase 5's rate limiting (anonymous users cost CPU).
 
-- [ ] Logged-out visitors land on a "Try it" editor at `/` instead of the login page; logged-in users still see their gallery
-- [ ] `POST /api/guest/transform`: multipart `image` + `transformations` JSON, same Multer/Sharp limits (10 MB, 25 MP), runs `applyTransform` in memory and sends the result bytes back. No Mongo rows, no stored files, nothing to clean up
-- [ ] Stricter per-IP limit for guests (for example 5 transforms per minute), `429 RATE_LIMITED` as usual
-- [ ] Client keeps the original and the result only in the browser (object URLs) for the before/after view and the download; a note says "Not saved. Download your result before you leave"
-- [ ] "Try with a sample photo" button, so a visitor can test without their own image
-- [ ] Search: the "Try it" page is the one page people can find by searching ("rotate image online", "convert photo to webp"), so it gets its own title and description written for those searches and is added to `sitemap.xml`
-- [ ] Sign-up nudge after the first successful download: a non-blocking card (bottom corner on desktop, bottom sheet on phones) saying what an account adds (a gallery, versions, 12-hour storage), with "Create account", "Log in" and "Not now". Dismiss with ×, Esc or "Not now"; it doesn't steal focus (announced politely), never appears mid-edit, and stays hidden for 7 days after a dismiss (localStorage)
-- [ ] Tests: guest transform returns an image and writes nothing to Mongo or storage; the guest limit gives 429
+- [x] Logged-out visitors land on a "Try it" editor at `/` instead of the login page; logged-in users still see their gallery
+- [x] `POST /api/guest/transform`: multipart `image` + `transformations` JSON, same Multer/Sharp limits (10 MB, 25 MP), runs `applyTransform` in memory and sends the result bytes back. No Mongo rows, no stored files, nothing to clean up
+- [x] Stricter per-IP limit for guests (for example 5 transforms per minute), `429 RATE_LIMITED` as usual
+- [x] Client keeps the original and the result only in the browser (object URLs) for the before/after view and the download; a note says "Not saved. Download your result before you leave"
+- [x] "Try with a sample photo" button, so a visitor can test without their own image
+- [x] Search: the "Try it" page is the one page people can find by searching ("rotate image online", "convert photo to webp"), so it gets its own title and description written for those searches and is added to `sitemap.xml`
+- [x] Sign-up nudge after the first successful download: a non-blocking card (bottom corner on desktop, bottom sheet on phones) saying what an account adds (a gallery, versions, 12-hour storage), with "Create account", "Log in" and "Not now". Dismiss with ×, Esc or "Not now"; it doesn't steal focus (announced politely), never appears mid-edit, and stays hidden for 7 days after a dismiss (localStorage)
+- [x] Tests: guest transform returns an image and writes nothing to Mongo or storage; the guest limit gives 429
 
 **Done when:** a logged-out visitor can transform and download a photo with nothing saved on the server, and the nudge appears once after the first download and is easy to dismiss.
 

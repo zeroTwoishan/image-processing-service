@@ -14,7 +14,7 @@ export default function Navbar() {
   return (
     <header className="border-b border-line bg-canvas">
       <nav aria-label="Main" className="mx-auto flex h-14 w-full max-w-page items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to={user ? '/' : '/login'} aria-label="Darkroom, home" className={cx('-ml-1 rounded-sm px-1', focusRing)}>
+        <Link to="/"aria-label="Darkroom, home" className={cx('-ml-1 rounded-sm px-1', focusRing)}>
           <Wordmark />
         </Link>
 

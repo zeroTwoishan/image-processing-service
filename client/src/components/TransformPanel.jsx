@@ -65,6 +65,7 @@ const plural = (n) => `${n} ${n === 1 ? 'edit' : 'edits'}`;
  * cropping / onCroppingChange   the crop box on the photo is shown ("Crop on photo")
  * applySlot          desktop: a header element the Apply button is drawn into, next to Download
  * toolsSlot          phone: the element under the photo where the chosen tool is drawn
+ * applyNote          the line under the tools (guests get no versions, so the "Try it" page says something else)
  */
 export function TransformPanel({
   value: t,
@@ -81,6 +82,7 @@ export function TransformPanel({
   onCroppingChange,
   applySlot,
   toolsSlot,
+  applyNote = 'Applying makes a new version. The original stays as it is.',
 }) {
   const uid = useId();
   const wide = useMediaQuery('(min-width: 64rem)'); // Tailwind's lg
@@ -392,7 +394,7 @@ export function TransformPanel({
             {current.content}
           </fieldset>
         </div>
-        <p className="text-[13px] text-fg-subtle">Applying makes a new version. The original stays as it is.</p>
+        <p className="text-[13px] text-fg-subtle">{applyNote}</p>
       </section>
     );
 
@@ -485,7 +487,7 @@ export function TransformPanel({
         {!applySlot && errors.general && <Notice>{errors.general}</Notice>}
         <RateLimitNotice seconds={rateLimitSeconds} restartKey={rateLimitKey} lead="Slow down." />
         {!applySlot && applyButton('w-full')}
-        <p className="text-[13px] text-fg-subtle">Applying makes a new version. The original stays as it is.</p>
+        <p className="text-[13px] text-fg-subtle">{applyNote}</p>
       </div>
       {/* A portal draws the button into the header, while this panel still owns its rules (count, disabled, Applying…). */}
       {applySlot && createPortal(applyButton(), applySlot)}

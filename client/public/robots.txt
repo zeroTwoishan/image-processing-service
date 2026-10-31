@@ -1,4 +1,4 @@
-# Only the sign-in pages are public. Photo pages need a login and are private, so crawlers skip them.
+# Public: the "Try it" editor at / and the sign-in pages. Photo pages need a login and are private, so crawlers skip them.
 User-agent: *
 Disallow: /images/
 

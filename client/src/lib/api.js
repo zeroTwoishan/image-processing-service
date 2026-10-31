@@ -65,6 +65,26 @@ export async function api(path, { method = 'GET', body } = {}) {
 }
 
 /**
+ * Guest mode ("Try it"): sends the photo and the edits, gets the edited image back as a Blob. Nothing is
+ * stored on the server, so the browser holds both images. No token and no progress bar: a guest's photo is
+ * already on their device, and the server answers with the result, not JSON.
+ */
+export async function guestTransform(file, transformations) {
+  const form = new FormData();
+  form.append('transformations', JSON.stringify(transformations)); // a multipart field is text, so JSON it
+  form.append('image', file);
+
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/api/guest/transform`, { method: 'POST', body: form });
+  } catch {
+    throw networkError();
+  }
+  if (!res.ok) throw toApiError(res.status, await res.json().catch(() => null), res.headers.get('Retry-After'), false);
+  return res.blob();
+}
+
+/**
  * Uploads one image as multipart/form-data and reports progress (0–100) while the bytes are sent.
  * XMLHttpRequest, not fetch: fetch still has no upload-progress events, and a 10 MB photo on mobile data
  * needs a progress bar.

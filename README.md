@@ -16,6 +16,7 @@ This is the [Image Processing Service](https://roadmap.sh/projects/image-process
 - **Live preview, one Apply.** Every edit previews instantly in the browser (CSS transforms and filters, a drag-to-crop box), and the server makes the real file only when you press Apply.
 - **Rotate, flip, crop, resize, grayscale, sepia, text watermark,** and conversion to JPEG, PNG, WebP or AVIF with a quality setting.
 - **Privacy:** location and camera data (EXIF/GPS) are removed on upload, and every photo and its versions are deleted 12 hours after upload.
+- **Try it without an account:** logged-out visitors get the same editor at `/`, with a sample photo. Their photo is edited and sent straight back; nothing is stored.
 - **Accounts:** sign up, a gallery with pages, rename in place, download, delete.
 - **Works on phones:** the photo stays on screen while the tools switch underneath it.
 
@@ -47,7 +48,7 @@ Decisions worth a second look:
 
 ## API
 
-All routes live under `/api`; every `/images` route needs `Authorization: Bearer <token>`. Errors always look like `{ "error": { "code", "message", "details?" } }`.
+All routes live under `/api`; every `/images` route needs `Authorization: Bearer <token>` (`/guest` doesn't). Errors always look like `{ "error": { "code", "message", "details?" } }`.
 
 | Method | Path | Does |
 | --- | --- | --- |
@@ -59,6 +60,7 @@ All routes live under `/api`; every `/images` route needs `Authorization: Bearer
 | `POST` | `/images/:id/transform` | `{ transformations }` → `201` new version, or `200` if it already exists. 10 a minute per user |
 | `PATCH` | `/images/:id` | Rename (`{ name }`; the server adds the real extension) |
 | `DELETE` | `/images/:id` | Delete a photo and its versions, or one version |
+| `POST` | `/guest/transform` | No login: multipart `image` + `transformations` (JSON text) → the edited image's bytes; nothing stored. 5 a minute per IP |
 | `GET` | `/health/live`, `/health/ready` | Process up / database reachable |
 
 ```json

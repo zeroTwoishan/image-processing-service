@@ -9,6 +9,10 @@ const variants = {
   ghost: 'text-fg-muted hover:bg-raised hover:text-fg disabled:text-fg-subtle disabled:hover:bg-transparent',
 };
 
+// A button's look for something that isn't a <button>, such as a router <Link> that should read as an action.
+export const buttonClass = (variant = 'primary', className) =>
+  cx('inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium', variants[variant], pressable, focusRing, className);
+
 /**
  * variant: 'primary' | 'secondary' | 'ghost'
  * busy:    spinner + busyLabel, aria-busy, disabled. A busy or disabled primary
@@ -32,14 +36,7 @@ export function Button({
       type={type}
       disabled={disabled || busy}
       aria-busy={busy || undefined}
-      className={cx(
-        'inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium disabled:cursor-not-allowed',
-        variants[variant],
-        busy && 'disabled:text-fg-muted',
-        pressable,
-        focusRing,
-        className,
-      )}
+      className={buttonClass(variant, cx('disabled:cursor-not-allowed', busy && 'disabled:text-fg-muted', className))}
       {...rest}
     >
       {busy ? <Spinner /> : Icon && <Icon size={ICON.md} weight="regular" aria-hidden="true" />}
