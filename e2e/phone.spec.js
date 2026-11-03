@@ -19,3 +19,18 @@ test('a guest edits on a phone with the bottom tool bar', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Your photo is developed' })).toBeVisible();
   await expect(page.getByText(/900×1200 · jpeg/)).toBeVisible();
 });
+
+test('switching tools on a phone scrolls back up to the photo and the new tool', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Try a sample photo' }).click();
+  const tools = page.getByRole('tablist', { name: 'Edit tools' });
+
+  // Crop is the longest tool: scroll down through it, like someone typing exact pixels
+  await tools.getByRole('tab', { name: 'Crop' }).click();
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+
+  await tools.getByRole('tab', { name: 'Size' }).click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0); // smooth scroll lands at the top
+  await expect(page.getByRole('tabpanel')).toContainText('Resize');
+});

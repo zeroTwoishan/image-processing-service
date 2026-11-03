@@ -46,3 +46,15 @@ test('a file that is not an image is refused before anything is sent', async ({ 
   await expect(page.getByRole('alert')).toContainText('supported image');
   expect(sent).toBe(false);
 });
+
+test('a new page opens at the top, not where the last page was scrolled to', async ({ page }) => {
+  await page.goto('/');
+  // From the footer, at the very bottom of the long landing page
+  await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
+  const footerLink = page.getByRole('contentinfo').getByRole('link', { name: 'Log in' });
+  await expect(footerLink).toBeVisible();
+  await footerLink.click();
+
+  await expect(page).toHaveURL(/\/login$/);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});

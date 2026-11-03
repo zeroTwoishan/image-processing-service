@@ -27,3 +27,12 @@ export const pageX = 'mx-auto w-full max-w-page px-4 sm:px-6 lg:px-8';
 
 /** Small uppercase label above section headings ("FEATURES"). */
 export const eyebrow = 'font-mono text-[11px] font-medium tracking-[0.18em] text-fg-subtle uppercase';
+
+/**
+ * Scroll the page back to the top. Smooth by default, but instant for people who ask their system for reduced
+ * motion. (`behavior` is always explicit: index.css sets `scroll-behavior: smooth`, which would otherwise apply.)
+ */
+export function scrollToTop({ smooth = true } = {}) {
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: 0, behavior: smooth && !reduce ? 'smooth' : 'instant' });
+}

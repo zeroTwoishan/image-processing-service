@@ -12,7 +12,7 @@ import {
   FlipVerticalIcon,
   TextTIcon,
 } from '@phosphor-icons/react';
-import { cx, focusRing, ICON, pressable } from '../lib/ui';
+import { cx, focusRing, ICON, pressable, scrollToTop } from '../lib/ui';
 import {
   changedSteps,
   countChanges,
@@ -88,10 +88,18 @@ export function TransformPanel({
   const wide = useMediaQuery('(min-width: 64rem)'); // Tailwind's lg
   const [tool, setTool] = useState('rotate'); // phone: the tool on screen
 
+  // Phone: a new tool starts from its top. The photo is pinned to the top of the screen and the tool sits right
+  // under it, so scrolling the page to the top shows the photo and the start of the new tool together. Without
+  // this you stayed scrolled down wherever the last tool had left you.
+  const selectTool = (key) => {
+    setTool(key);
+    if (window.scrollY > 0) scrollToTop();
+  };
+
   // A crop the server refused is fixed in the Crop tool, so open it on a phone.
   useEffect(() => {
-    if (errors.crop) setTool('crop');
-  }, [errors.crop]);
+    if (errors.crop) selectTool('crop');
+  }, [errors.crop]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const remaining = useCountdown(rateLimitSeconds, rateLimitKey);
   const applying = status === 'applying';
@@ -423,7 +431,7 @@ export function TransformPanel({
                   id={`${uid}-tab-${s.key}`}
                   aria-selected={selected}
                   aria-controls={`${uid}-panel`}
-                  onClick={() => setTool(s.key)}
+                  onClick={() => selectTool(s.key)}
                   className={cx(
                     'relative flex min-h-14 min-w-15 flex-1 flex-col items-center justify-center gap-1 rounded-md text-[11px]',
                     selected ? 'font-medium text-fg [&>svg]:text-safelight' : 'text-fg-subtle',

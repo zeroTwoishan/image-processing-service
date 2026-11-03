@@ -4,7 +4,7 @@ import { ArrowClockwiseIcon, ImagesIcon, SparkleIcon } from '@phosphor-icons/rea
 import { api, uploadImage } from '../lib/api.js';
 import { useNow } from '../hooks/useNow';
 import { useFlashToast } from '../hooks/useFlashToast';
-import { cx, ICON, pageX } from '../lib/ui';
+import { cx, ICON, pageX, scrollToTop } from '../lib/ui';
 import { Button } from '../components/Button';
 import { Notice } from '../components/Notice';
 import { Pagination } from '../components/Pagination';
@@ -28,7 +28,7 @@ export default function Gallery() {
 
   const goTo = (p) => {
     setSearchParams(p > 1 ? { page: String(p) } : {});
-    window.scrollTo({ top: 0 });
+    scrollToTop(); // smooth: same page, new photos
   };
 
   useEffect(() => {
