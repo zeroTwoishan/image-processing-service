@@ -5,7 +5,7 @@ import { Button } from './Button';
 export function Pagination({ page, totalPages, onPrevious, onNext, disabled = false }) {
   if (totalPages <= 1) return null;
   return (
-    <nav aria-label="Pagination" className="flex items-center justify-between gap-4 border-t border-line pt-5">
+    <nav aria-label="Pagination" className="flex items-center justify-between gap-4 border-t border-white/[0.06] pt-5">
       <p aria-live="polite" className="font-mono text-[13px] text-fg-muted tabular-nums">
         Page <span className="text-fg">{page}</span> of {totalPages}
       </p>

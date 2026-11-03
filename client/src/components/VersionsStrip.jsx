@@ -36,8 +36,8 @@ export function VersionsStrip({ original, versions = [], currentId, now = Date.n
               >
                 <span
                   className={cx(
-                    'block h-24 overflow-hidden rounded-md bg-raised ring-offset-2 ring-offset-canvas',
-                    current ? 'ring-1 ring-fg' : 'ring-1 ring-transparent group-hover:ring-line-strong',
+                    'block h-24 overflow-hidden rounded-md bg-raised ring-offset-2 ring-offset-canvas transition-shadow duration-200',
+                    current ? 'ring-2 ring-safelight shadow-[0_8px_24px_-8px_rgb(255_106_61/0.6)]' : 'ring-1 ring-transparent group-hover:ring-white/25',
                   )}
                 >
                   <img src={it.thumbnailUrl} alt="" className="photo-edge size-full rounded-md object-cover" />

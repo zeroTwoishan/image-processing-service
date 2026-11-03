@@ -152,8 +152,8 @@ export function TransformPanel({
         <SafelightDot />
         Applying {plural(count)}
       </p>
-      <div aria-hidden="true" className="h-0.5 overflow-hidden rounded-full bg-line-strong">
-        <div className="h-full w-1/4 animate-scan bg-safelight" />
+      <div aria-hidden="true" className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="h-full w-1/4 animate-scan rounded-full bg-safelight-gradient" />
       </div>
     </div>
   );
@@ -378,7 +378,7 @@ export function TransformPanel({
           role="tabpanel"
           id={`${uid}-panel`}
           aria-labelledby={`${uid}-tab-${current.key}`}
-          className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3"
+          className="card flex flex-col gap-3 rounded-lg p-3"
         >
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex min-w-0 items-baseline gap-2 text-sm font-medium text-fg">
@@ -403,7 +403,7 @@ export function TransformPanel({
         {toolsSlot ? createPortal(tools, toolsSlot) : tools}
 
         {/* Fixed to the bottom of the screen: status, the tool tabs, Apply. */}
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line-strong bg-surface pb-[env(safe-area-inset-bottom)]">
+        <div className="glass fixed inset-x-0 bottom-0 z-40 border-t border-white/10 pb-[env(safe-area-inset-bottom)]">
           {(applying || errors.general || rateLimitSeconds > 0) && (
             <div className="flex flex-col gap-3 border-b border-line px-4 py-3">
               {developing}
@@ -426,7 +426,7 @@ export function TransformPanel({
                   onClick={() => setTool(s.key)}
                   className={cx(
                     'relative flex min-h-14 min-w-15 flex-1 flex-col items-center justify-center gap-1 rounded-md text-[11px]',
-                    selected ? 'font-medium text-fg' : 'text-fg-subtle',
+                    selected ? 'font-medium text-fg [&>svg]:text-safelight' : 'text-fg-subtle',
                     pressable,
                     focusRing,
                   )}
@@ -454,8 +454,8 @@ export function TransformPanel({
   }
 
   return (
-    <section aria-labelledby={`${uid}-title`} className="sticky top-6 flex max-h-[calc(100dvh-3rem)] flex-col rounded-lg border border-line-strong bg-surface">
-      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line py-2 pr-2 pl-5">
+    <section aria-labelledby={`${uid}-title`} className="card sticky top-22 flex max-h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-lg">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] py-2 pr-2 pl-5">
         <h2 id={`${uid}-title`} className="text-[15px] font-semibold text-fg">
           Edit
         </h2>
@@ -482,7 +482,7 @@ export function TransformPanel({
 
       {/* Footer: status. Apply itself sits in the page header (applySlot), next to Download, where it's visible as
           soon as the page loads; this panel is taller than the screen, so a footer button wasn't. */}
-      <div className="flex shrink-0 flex-col gap-3 border-t border-line p-5">
+      <div className="flex shrink-0 flex-col gap-3 border-t border-white/[0.06] bg-white/[0.015] p-5">
         {developing}
         {!applySlot && errors.general && <Notice>{errors.general}</Notice>}
         <RateLimitNotice seconds={rateLimitSeconds} restartKey={rateLimitKey} lead="Slow down." />

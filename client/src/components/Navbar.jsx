@@ -1,36 +1,91 @@
-import { Link, useLocation } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router';
 import { SignOutIcon } from '@phosphor-icons/react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { cx, focusRing, ICON, pressable } from '../lib/ui';
+import { cx, focusRing, ICON, pageX, pressable } from '../lib/ui';
+import { buttonClass } from './Button';
 import { Wordmark } from './Wordmark';
 
-const navLink = cx('inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium', pressable, focusRing);
+// Section links on the landing page (logged-out "/"). Plain hrefs so they also work from /login.
+const SECTIONS = [
+  ['Features', '/#features'],
+  ['How it works', '/#how'],
+  ['Privacy', '/#privacy'],
+];
 
-// Top bar (look from design-reference, wired to AuthContext and React Router).
+const navLink = cx('inline-flex min-h-9 items-center rounded-md px-3 text-[13px] font-medium', pressable, focusRing);
+
+/**
+ * Top bar: sticky and frosted. Transparent at the very top of the page so the hero's glow shows through,
+ * then it gains a hairline and blur once you scroll (Linear / Vercel style).
+ */
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <header className="border-b border-line bg-canvas">
-      <nav aria-label="Main" className="mx-auto flex h-14 w-full max-w-page items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/"aria-label="Darkroom, home" className={cx('-ml-1 rounded-sm px-1', focusRing)}>
+    <header
+      className={cx(
+        // Sticky on desktop only: on phones the editor pins the photo to the top of the screen instead.
+        'relative top-0 z-40 border-b transition-[background-color,border-color] duration-300 lg:sticky',
+        scrolled ? 'glass border-white/[0.06]' : 'border-transparent bg-transparent',
+      )}
+    >
+      <nav aria-label="Main" className={cx(pageX, 'flex h-16 items-center justify-between gap-4')}>
+        <Link to="/" aria-label="Darkroom, home" className={cx('-ml-1 rounded-md px-1 py-1', focusRing)}>
           <Wordmark />
         </Link>
 
+        {!user && (
+          <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+            {SECTIONS.map(([label, href]) => (
+              <li key={href}>
+                <a href={href} className={cx(navLink, 'text-fg-muted hover:bg-white/[0.05] hover:text-fg')}>
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {user ? (
-          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
-            <span className="truncate text-sm text-fg-muted">
-              <span className="sr-only">Logged in as </span>
-              {user.username}
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) =>
+                cx(navLink, 'max-sm:hidden', isActive ? 'bg-white/[0.06] text-fg' : 'text-fg-muted hover:text-fg')
+              }
+            >
+              Photos
+            </NavLink>
+            <span className="flex min-w-0 items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] py-1 pr-3 pl-1">
+              <span
+                aria-hidden="true"
+                className="grid size-6 shrink-0 place-items-center rounded-full bg-safelight-gradient text-[11px] font-semibold text-safelight-ink uppercase"
+              >
+                {user.username.slice(0, 1)}
+              </span>
+              <span className="truncate text-[13px] text-fg-muted">
+                <span className="sr-only">Logged in as </span>
+                {user.username}
+              </span>
             </span>
-            <button type="button" onClick={logout} className={cx(navLink, 'gap-2 text-fg-muted hover:bg-raised hover:text-fg')}>
+            <button type="button" onClick={logout} className={cx(navLink, 'gap-2 text-fg-muted hover:bg-white/[0.06] hover:text-fg')}>
               <SignOutIcon size={ICON.md} aria-hidden="true" />
-              Log out
+              <span className="max-sm:sr-only">Log out</span>
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <Link
               to="/login"
               aria-current={pathname === '/login' ? 'page' : undefined}
@@ -38,11 +93,7 @@ export default function Navbar() {
             >
               Log in
             </Link>
-            <Link
-              to="/register"
-              aria-current={pathname === '/register' ? 'page' : undefined}
-              className={cx(navLink, 'border border-line-strong text-fg hover:border-control-edge hover:bg-raised')}
-            >
+            <Link to="/register" aria-current={pathname === '/register' ? 'page' : undefined} className={buttonClass('light', undefined, 'sm')}>
               Sign up
             </Link>
           </div>

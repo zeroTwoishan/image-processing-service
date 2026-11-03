@@ -43,7 +43,7 @@ export function ImageCard({ image, now = Date.now() }) {
       )}
     >
       <div
-        className="overflow-hidden rounded-md bg-raised transition-transform duration-200 ease-out motion-safe:transform-[rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))]"
+        className="relative overflow-hidden rounded-md bg-raised shadow-[0_18px_40px_-22px_rgb(0_0_0/0.9)] transition-[transform,box-shadow] duration-300 ease-out group-hover:shadow-[0_24px_50px_-20px_rgb(255_106_61/0.35)] motion-safe:transform-[rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))]"
         style={{ aspectRatio: `${image.width} / ${image.height}` }}
       >
         <img
@@ -51,18 +51,25 @@ export function ImageCard({ image, now = Date.now() }) {
           alt=""
           loading="lazy"
           decoding="async"
-          className="photo-edge size-full rounded-md object-cover"
+          className="photo-edge size-full rounded-md object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
+        {/* Bottom shade + "Open" hint on hover, so the card reads as clickable */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex items-end justify-end bg-gradient-to-t from-black/55 via-transparent to-transparent p-2.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        >
+          <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-canvas">Open →</span>
+        </div>
+        {image.parent && (
+          <span className="absolute top-2 left-2 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[10px] text-fg backdrop-blur">
+            Version
+          </span>
+        )}
       </div>
 
       <div className="flex min-w-0 flex-col gap-1 px-0.5">
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="min-w-0 truncate text-[13px] font-medium text-fg">{image.originalName}</h3>
-          {image.parent && (
-            <span className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-[11px] leading-4 text-fg-muted">
-              Version
-            </span>
-          )}
         </div>
         <p className="flex flex-wrap gap-x-2 font-mono text-xs text-fg-subtle tabular-nums">
           <span className="whitespace-nowrap">{formatDimensions(image.width, image.height)}</span>

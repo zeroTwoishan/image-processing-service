@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { ArrowLeftIcon, DownloadSimpleIcon } from '@phosphor-icons/react';
 import { api } from '../lib/api.js';
-import { cx, focusRing, ICON } from '../lib/ui';
+import { cx, focusRing, ICON, pageX } from '../lib/ui';
 import { countChanges, EXTENSIONS, fromApiTransform, toApiTransform } from '../lib/transform';
 import { useNow } from '../hooks/useNow';
 import { useFlashToast } from '../hooks/useFlashToast';
@@ -162,7 +162,7 @@ function PhotoPage({ id }) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-page flex-1 flex-col gap-4 px-4 pt-4 pb-40 sm:px-6 lg:px-8 lg:pb-16">
+    <main className={cx(pageX, 'flex flex-1 flex-col gap-4 pt-4 pb-40 lg:pb-16')}>
       {/* pb-40 on phones: room for the edit bar fixed to the bottom of the screen, so nothing hides under it. */}
       <title>{image ? `${image.originalName} · Darkroom` : 'Photo · Darkroom'}</title>
 
@@ -212,7 +212,7 @@ function PhotoPage({ id }) {
 
       {photo.status === 'loading' && (
         // Shaped like the real stage, so nothing jumps when the photo arrives.
-        <div aria-busy="true" aria-label="Loading photo" className="h-[min(68dvh,720px)] min-h-72 animate-pulse rounded-lg bg-raised" />
+        <div aria-busy="true" aria-label="Loading photo" className="shimmer h-[min(68dvh,720px)] min-h-72 rounded-lg" />
       )}
 
       {image && (
@@ -255,7 +255,7 @@ function PhotoPage({ id }) {
 
             <VersionsStrip original={original} versions={versions} currentId={image.id} now={now} linkState={linkState} />
 
-            <div className="grid gap-8 border-t border-line pt-8 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)] md:gap-10">
+            <div className="card grid gap-8 rounded-lg p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)] md:gap-10">
               <ImageDetails image={image} now={now} madeFrom={isVersion ? original.originalName : undefined} />
 
               <section aria-labelledby="delete-heading" className="flex flex-col gap-3">

@@ -25,7 +25,7 @@ export function SignupNudge({ open, onDismiss }) {
       {open && (
         <section
           aria-labelledby="nudge-title"
-          className="pointer-events-auto relative flex w-full animate-enter flex-col gap-3 rounded-t-lg border border-line-strong bg-raised p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:max-w-sm sm:rounded-lg sm:pb-5"
+          className="glass pointer-events-auto relative flex w-full animate-enter flex-col gap-3 overflow-hidden rounded-t-xl border border-white/10 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_30px_60px_-20px_rgb(0_0_0/0.9)] sm:max-w-sm sm:rounded-xl sm:pb-5"
         >
           <button
             type="button"
@@ -35,7 +35,8 @@ export function SignupNudge({ open, onDismiss }) {
           >
             <XIcon size={ICON.sm} aria-hidden="true" />
           </button>
-          <h2 id="nudge-title" className="pr-10 text-[15px] font-medium text-fg">
+          <div aria-hidden="true" className="pointer-events-none absolute -top-20 -right-10 size-48 rounded-full bg-[radial-gradient(closest-side,rgb(255_106_61/0.3),transparent)]" />
+          <h2 id="nudge-title" className="pr-10 text-base font-semibold text-fg">
             Keep your photos with a free account
           </h2>
           <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-fg-muted">

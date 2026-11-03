@@ -4,7 +4,7 @@ import { ArrowClockwiseIcon, ImagesIcon, SparkleIcon } from '@phosphor-icons/rea
 import { api, uploadImage } from '../lib/api.js';
 import { useNow } from '../hooks/useNow';
 import { useFlashToast } from '../hooks/useFlashToast';
-import { ICON } from '../lib/ui';
+import { cx, ICON, pageX } from '../lib/ui';
 import { Button } from '../components/Button';
 import { Notice } from '../components/Notice';
 import { Pagination } from '../components/Pagination';
@@ -12,6 +12,7 @@ import { PhotoGrid } from '../components/PhotoGrid';
 import { PhotoGridSkeleton } from '../components/PhotoGridSkeleton';
 import { Toast } from '../components/Toast';
 import { UploadDropzone } from '../components/UploadDropzone';
+import { Footer } from '../components/Footer';
 
 const PAGE_SIZE = 12;
 
@@ -80,14 +81,27 @@ export default function Gallery() {
   const total = list.pagination?.total ?? 0;
 
   return (
-    <main className="mx-auto flex w-full max-w-page flex-1 flex-col gap-8 px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-8">
+    <>
+    <main className={cx(pageX, 'relative flex flex-1 flex-col gap-8 overflow-x-clip pt-8 pb-20 sm:pt-12')}>
       <title>Your photos · Darkroom</title>
-      <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h1 className="font-display text-[40px] leading-[1.1] tracking-[-0.03em] text-fg">Your photos</h1>
+      <div aria-hidden="true" className="pointer-events-none absolute top-[-300px] left-0 -z-10 h-[520px] w-[760px] rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.14),transparent)]" />
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="flex flex-col gap-2">
+          <p className="font-mono text-[11px] tracking-[0.18em] text-safelight uppercase">Contact sheet</p>
+          <h1 className="text-fg-gradient pb-1 text-[40px] leading-[1.02] font-semibold tracking-[-0.045em] sm:text-[52px]">
+            Your <span className="font-display font-normal tracking-[-0.02em] italic">photos</span>
+          </h1>
+        </div>
         {total > 0 && (
-          <p className="font-mono text-[13px] text-fg-subtle tabular-nums">
-            {total} {total === 1 ? 'photo' : 'photos'} · each is deleted 12 hours after upload
-          </p>
+          <ul className="flex flex-wrap gap-2 font-mono text-[12px] tabular-nums">
+            <li className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-fg">
+              {total} {total === 1 ? 'photo' : 'photos'}
+            </li>
+            <li className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-fg-muted">
+              <span aria-hidden="true" className="size-1.5 rounded-full bg-safelight safelight-glow" />
+              each deleted 12 h after upload
+            </li>
+          </ul>
         )}
       </header>
 
@@ -118,10 +132,13 @@ export default function Gallery() {
             <PhotoGridSkeleton />
           </>
         ) : images.length === 0 ? (
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-8">
-            <div className="flex items-center gap-4">
-              <ImagesIcon size={ICON.xl} weight="duotone" aria-hidden="true" className="shrink-0 text-fg-subtle" />
-              <p className="max-w-[40ch] text-[15px] text-fg-muted">
+          <div className="card flex flex-col items-center gap-5 rounded-xl px-6 py-16 text-center">
+            <span className="grid size-16 place-items-center rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.08] to-white/[0.02]">
+              <ImagesIcon size={32} weight="duotone" aria-hidden="true" className="text-safelight" />
+            </span>
+            <div className="flex flex-col gap-1.5">
+              <h2 className="text-lg font-semibold text-fg">Your contact sheet is empty</h2>
+              <p className="max-w-[40ch] text-[14px] text-fg-muted">
                 No photos yet. Upload one above and it will show up here, ready to edit.
               </p>
             </div>
@@ -145,5 +162,7 @@ export default function Gallery() {
 
       <Toast open={Boolean(toast)} message={toast?.message} detail={toast?.detail} onClose={closeToast} />
     </main>
+    <Footer />
+    </>
   );
 }

@@ -5,16 +5,16 @@
  */
 export function TransformStep({ number, title, summary, changed = false, children }) {
   return (
-    <li className="border-t border-line px-4 py-5 first:border-t-0 sm:px-5">
+    <li className="border-t border-white/[0.06] px-4 py-5 first:border-t-0 sm:px-5">
       <fieldset className="min-w-0">
         <legend className="mb-4 flex w-full items-center gap-3">
-          <span className="w-3 font-mono text-xs text-fg-subtle tabular-nums">{number}</span>
+          <span className="grid size-5 place-items-center rounded-full bg-white/[0.06] font-mono text-[10px] text-fg-muted tabular-nums">{number}</span>
           <span className="text-sm font-medium text-fg">{title}</span>
           <span className="ml-auto flex min-w-0 items-center gap-2">
             {summary && <span className="truncate font-mono text-xs text-fg-muted tabular-nums">{summary}</span>}
             {changed && (
               <>
-                <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-safelight" />
+                <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-safelight safelight-glow" />
                 <span className="sr-only">, will be applied</span>
               </>
             )}

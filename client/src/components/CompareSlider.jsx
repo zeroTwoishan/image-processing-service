@@ -32,7 +32,7 @@ export function CompareSlider({ beforeSrc, afterSrc, alt, width, height, beforeW
   }
 
   return (
-    <div className="grid h-[min(68dvh,720px)] min-h-72 place-items-center overflow-hidden rounded-lg border border-line bg-surface p-4 @container-size">
+    <div className="grid h-[min(68dvh,720px)] min-h-72 place-items-center card overflow-hidden rounded-lg p-4 @container-size">
       <div
         className={cx(
           'relative overflow-hidden rounded-sm',
@@ -56,7 +56,7 @@ export function CompareSlider({ beforeSrc, afterSrc, alt, width, height, beforeW
             {/* divider + handle: drawn only; the range input below is the real control */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-y-0" style={{ left: `${pos}%` }}>
               <div className="absolute inset-y-0 -left-px w-px bg-fg/80" />
-              <div className="absolute top-1/2 -left-4.5 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-fg/70 bg-canvas/85 text-fg">
+              <div className="absolute top-1/2 -left-4.5 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-black/55 text-fg shadow-xl backdrop-blur">
                 <ArrowsLeftRightIcon size={ICON.sm} />
               </div>
             </div>
@@ -84,7 +84,7 @@ function SideFrame({ src, alt, label, width, height }) {
   return (
     <figure className="flex min-w-0 flex-col gap-2">
       {/* Stacked on phones, so each is shorter: both should fit on one screen to compare them. */}
-      <div className="grid h-[min(34dvh,560px)] min-h-48 place-items-center sm:h-[min(52dvh,560px)] overflow-hidden rounded-lg border border-line bg-surface p-4 @container-size">
+      <div className="grid h-[min(34dvh,560px)] min-h-48 place-items-center sm:h-[min(52dvh,560px)] card overflow-hidden rounded-lg p-4 @container-size">
         <img
           src={src}
           alt={alt}

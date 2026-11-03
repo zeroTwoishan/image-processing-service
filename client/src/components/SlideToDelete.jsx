@@ -31,8 +31,8 @@ export function SlideToDelete({ label, onConfirm, status = 'idle', disabled = fa
     <div className="flex flex-col gap-2">
       <div
         className={cx(
-          'relative h-12 overflow-hidden rounded-md border bg-surface [container-type:inline-size]',
-          deleting ? 'border-danger/40' : 'border-line-strong',
+          'relative h-12 overflow-hidden rounded-md border bg-canvas/50 [container-type:inline-size]',
+          deleting ? 'border-danger/40' : 'border-white/10',
           'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-safelight',
         )}
       >

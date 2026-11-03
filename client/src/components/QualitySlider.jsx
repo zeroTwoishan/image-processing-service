@@ -31,10 +31,10 @@ export function QualitySlider({ value = 80, onChange, disabled = false }) {
       </div>
       <div className="relative h-11">
         {/* rail + filled part (thin lines, inset by the thumb radius so they meet its centre) */}
-        <div aria-hidden="true" className="absolute inset-x-2.25 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-line-strong" />
+        <div aria-hidden="true" className="absolute inset-x-2.25 top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/[0.08]" />
         <div
           aria-hidden="true"
-          className="absolute inset-x-2.25 top-1/2 h-0.5 origin-left rounded-full bg-fg-muted transition-transform duration-150 ease-out"
+          className="absolute inset-x-2.25 top-1/2 h-1 origin-left rounded-full bg-safelight-gradient transition-transform duration-150 ease-out"
           style={{ transform: `translateY(-50%) scaleX(${fraction})` }}
         />
         {/* notches */}

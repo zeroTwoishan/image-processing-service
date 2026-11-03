@@ -22,7 +22,7 @@ export function VersionNotice({ version, original, now = Date.now(), linkState, 
   }, [focusOnMount]);
 
   return (
-    <section aria-labelledby="version-heading" className="flex min-w-0 flex-col gap-4 rounded-lg border border-line bg-surface p-5 lg:sticky lg:top-6">
+    <section aria-labelledby="version-heading" className="card flex min-w-0 flex-col gap-4 rounded-lg p-5 lg:sticky lg:top-22">
       <div className="flex flex-col gap-2">
         <h2 ref={headingRef} tabIndex={-1} id="version-heading" className="text-[15px] font-semibold text-fg focus:outline-none">
           You’re looking at {version.label}

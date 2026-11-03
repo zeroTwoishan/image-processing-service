@@ -39,7 +39,7 @@ export function EditPreview({ src, alt, width, height, t, cropping = false, onCr
 
   return (
     // Shorter on phones (38% of the screen), so the photo, the tool under it and the edit bar fit on one screen.
-    <div className="grid h-[38dvh] min-h-56 place-items-center lg:h-[min(68dvh,720px)] lg:min-h-72 overflow-hidden rounded-lg border border-line bg-surface p-4 @container-size">
+    <div className="card grid h-[38dvh] min-h-56 place-items-center overflow-hidden rounded-lg p-4 @container-size lg:h-[min(68dvh,720px)] lg:min-h-72">
       <div
         ref={frameRef}
         className="relative rounded-sm @container-size"
@@ -83,7 +83,7 @@ export function EditPreview({ src, alt, width, height, t, cropping = false, onCr
           )}
 
           {edited && (
-            <span className="pointer-events-none absolute top-3 left-3 rounded-sm bg-canvas/80 px-1.5 py-0.5 text-xs text-fg">Preview</span>
+            <span className="pointer-events-none absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 font-mono text-[11px] text-fg backdrop-blur"><span aria-hidden="true" className="size-1.5 rounded-full bg-safelight safelight-glow" />Preview</span>
           )}
         </div>
 

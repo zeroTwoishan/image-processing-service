@@ -2,6 +2,16 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-11-03: UI redesign (Darkroom v2)
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Frontend | New look: deeper warm canvas, film grain, a gradient "safelight" primary button with a glow, frosted navbar and cards. Same token names in `index.css`, so components kept working |
+| 2 | Frontend | "Try it" home page is now a full landing page: animated hero with the upload zone, a live editor mock, film strip, feature bento grid, how it works, privacy, CTA and a footer. The guest editor itself is unchanged |
+| 3 | Frontend | Restyled login/register, gallery, photo page, 404 and loading screen. No logic, routes or API calls changed |
+| 4 | Dependencies | Added `motion` (motion.dev) for scroll reveals and the hero animation. Ishan approved it. `MotionConfig reducedMotion="user"` respects reduced-motion settings |
+| 5 | Assets | `client/public/showcase/*.webp`: the illustrations from `design-reference`, recompressed (about 25 KB each) for the landing page |
+
 ### 2026-10-28: Phase 6 decisions
 
 | # | Section | Change |

@@ -29,8 +29,9 @@ export function TextField({ label, hint, error, type = 'text', suffix, mono = fa
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cx(
-            'h-11 w-full rounded-md border bg-raised px-3 text-base text-fg placeholder:text-fg-subtle sm:text-[15px]',
-            'transition-[border-color] duration-150 ease-out disabled:cursor-not-allowed disabled:text-fg-muted',
+            'h-11 w-full rounded-md border bg-canvas/60 px-3.5 text-base text-fg shadow-[inset_0_1px_2px_rgb(0_0_0/0.4)] placeholder:text-fg-subtle sm:text-[15px]',
+            'transition-[border-color,box-shadow] duration-150 ease-out disabled:cursor-not-allowed disabled:text-fg-muted',
+            'focus-visible:border-safelight/70 focus-visible:shadow-[0_0_0_4px_rgb(255_106_61/0.14)]',
             error ? 'border-danger' : 'border-control-edge hover:enabled:border-fg-subtle',
             (isPassword || suffix) && 'pr-12',
             mono && 'font-mono tabular-nums',

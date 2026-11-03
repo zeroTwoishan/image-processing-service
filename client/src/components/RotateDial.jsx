@@ -30,16 +30,16 @@ export function RotateDial({ value = 0, onChange, disabled = false }) {
     <fieldset disabled={disabled} className="min-w-0">
       <legend className="sr-only">Rotate</legend>
       <div className="relative size-[168px] shrink-0">
-        <div aria-hidden="true" className="absolute inset-[40px] rounded-full border border-line-strong bg-surface" />
+        <div aria-hidden="true" className="absolute inset-[40px] rounded-full border border-white/10 bg-canvas/60 shadow-[inset_0_2px_6px_rgb(0_0_0/0.5)]" />
         {ANGLES.map((deg) => (
           <span key={deg} aria-hidden="true" className={cx('absolute bg-control-edge', TICK[deg])} />
         ))}
         <div
           aria-hidden="true"
-          className="absolute inset-[54px] rounded-full border border-control-edge bg-raised transition-transform duration-[240ms] ease-out"
+          className="absolute inset-[54px] rounded-full border border-white/15 bg-gradient-to-b from-raised-2 to-raised shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_6px_16px_-6px_rgb(0_0_0/0.8)] transition-transform duration-[240ms] ease-out"
           style={{ transform: `rotate(${value}deg)` }}
         >
-          <span className="absolute top-1.5 left-1/2 h-4 w-0.5 -translate-x-1/2 rounded-full bg-fg" />
+          <span className="absolute top-1.5 left-1/2 h-4 w-0.5 -translate-x-1/2 rounded-full bg-safelight safelight-glow" />
         </div>
         {ANGLES.map((deg) => {
           const checked = value === deg;

@@ -11,7 +11,7 @@ export function SegmentedControl({ legend, options, value, onChange, mono = fals
     <fieldset disabled={disabled} className="min-w-0">
       <legend className="sr-only">{legend}</legend>
       <div
-        className="grid gap-1 rounded-md border border-line-strong p-1"
+        className="grid gap-1 rounded-md border border-white/10 bg-canvas/50 p-1"
         style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
       >
         {options.map((o) => {
@@ -24,7 +24,9 @@ export function SegmentedControl({ legend, options, value, onChange, mono = fals
                 'has-focus-visible:outline-2 has-focus-visible:outline-offset-1 has-focus-visible:outline-safelight has-disabled:cursor-not-allowed',
                 mono && 'font-mono',
                 // Not colour alone: the chosen option also gets an edge and a heavier weight (WCAG 1.4.1 / 1.4.11).
-                checked ? 'bg-raised font-medium text-fg ring-1 ring-control-edge' : 'text-fg-subtle hover:text-fg-muted',
+                checked
+                  ? 'bg-white/[0.09] font-medium text-fg shadow-[inset_0_1px_0_rgb(255_255_255/0.08)] ring-1 ring-white/15'
+                  : 'text-fg-subtle hover:text-fg-muted',
               )}
             >
               <input

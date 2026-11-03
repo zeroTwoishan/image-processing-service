@@ -48,11 +48,11 @@ export function Toast({ open = false, message, detail, onClose, duration = 4000,
       {shown && message && (
         <div
           className={cx(
-            'pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-md border border-line-strong bg-raised py-1.5 pr-1.5 pl-3.5',
+            'glass pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-lg border border-white/10 py-1.5 pr-1.5 pl-3.5 shadow-[0_20px_40px_-12px_rgb(0_0_0/0.8)]',
             leaving ? 'animate-exit' : 'animate-enter',
           )}
         >
-          <CheckIcon size={ICON.md} aria-hidden="true" className="shrink-0 text-fg-muted" />
+          <CheckIcon size={ICON.md} weight="bold" aria-hidden="true" className="shrink-0 text-success" />
           <p className="min-w-0 flex-1 truncate text-sm text-fg">
             {message}
             {detail && <span className="font-mono text-[13px] text-fg-muted"> · {detail}</span>}
