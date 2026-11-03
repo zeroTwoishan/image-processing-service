@@ -56,13 +56,13 @@ export function Footer() {
           </span>
         </div>
       </div>
-      {/* The big faded name, cropped by the bottom edge */}
-      <p
-        aria-hidden="true"
-        className="pointer-events-none -mb-[0.32em] text-center text-[22vw] leading-none font-semibold tracking-[-0.06em] text-white/[0.025] select-none"
-      >
-        Dark<span className="font-display font-normal italic">room</span>
-      </p>
+      {/* The big faded name, cropped by the bottom edge. SVG text, not HTML text: it's decoration, and as HTML the
+          contrast checkers (Lighthouse, axe) flag it, even with aria-hidden. */}
+      <svg aria-hidden="true" viewBox="0 0 1000 170" className="pointer-events-none block w-full select-none" focusable="false">
+        <text x="500" y="200" textAnchor="middle" fill="rgb(255 255 255 / 0.025)" className="font-sans" fontSize="250" fontWeight="600" letterSpacing="-14">
+          Dark<tspan className="font-display" fontWeight="400" fontStyle="italic" letterSpacing="-4">room</tspan>
+        </text>
+      </svg>
     </footer>
   );
 }

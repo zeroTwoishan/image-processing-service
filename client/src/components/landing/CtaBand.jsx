@@ -14,7 +14,7 @@ export function CtaBand({ inputId }) {
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-dots [mask-image:radial-gradient(60%_70%_at_50%_100%,#000,transparent)]" />
       <div
         aria-hidden="true"
-        className="absolute bottom-[-40%] left-1/2 -z-10 h-[90%] w-[80%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.45),rgb(242_54_43/0.12)_60%,transparent)] blur-2xl"
+        className="absolute bottom-[-40%] left-1/2 -z-10 h-[90%] w-[80%] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.45),rgb(242_54_43/0.12)_60%,transparent)]"
       />
       <Reveal className="mx-auto flex max-w-2xl flex-col items-center gap-6">
         <ApertureMark className="size-14" spinning />

@@ -6,3 +6,8 @@ dist/
 coverage/
 design-reference/
 server/uploads-test/
+
+# Playwright
+test-results/
+playwright-report/
+server/uploads-e2e/

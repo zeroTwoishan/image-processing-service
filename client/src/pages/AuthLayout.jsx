@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router';
-import { motion } from 'motion/react';
 import { ClockCountdownIcon, ImagesIcon, StackIcon } from '@phosphor-icons/react';
 import { cx, pageX } from '../lib/ui';
 
@@ -29,19 +28,15 @@ export default function AuthLayout({ title, lead, children, footer }) {
       </div>
 
       <div className={cx(pageX, 'grid flex-1 content-start gap-16 pt-10 pb-20 sm:pt-16 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start xl:gap-24')}>
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="flex w-full flex-col gap-8 lg:pt-6"
-        >
+        {/* CSS entrance (animate-rise), starting dim rather than invisible, so the heading counts as painted at once */}
+        <div className="flex w-full animate-rise flex-col gap-8 lg:pt-6">
           <header className="flex flex-col gap-3">
             <h1 className="text-fg-gradient pb-1 text-[40px] leading-[1.02] font-semibold tracking-[-0.045em] sm:text-[48px]">{title}</h1>
             {lead && <p className="max-w-[40ch] text-[15px] leading-relaxed text-fg-muted">{lead}</p>}
           </header>
           <div className="card rounded-xl p-5 sm:p-6">{children}</div>
           {footer && <p className="text-sm text-fg-muted">{footer}</p>}
-        </motion.div>
+        </div>
         <Showcase />
       </div>
     </main>
@@ -53,13 +48,8 @@ export default function AuthLayout({ title, lead, children, footer }) {
 function Showcase() {
   const img = 'absolute inset-0 size-full object-cover';
   return (
-    <motion.figure
-      initial={{ opacity: 0, y: 20, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className="relative hidden flex-col gap-4 lg:flex"
-    >
-      <div aria-hidden="true" className="absolute -inset-8 -z-10 rounded-[40%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.22),transparent)] blur-2xl" />
+    <figure style={{ animationDelay: '150ms' }} className="relative hidden animate-rise flex-col gap-4 lg:flex">
+      <div aria-hidden="true" className="absolute -inset-8 -z-10 rounded-[40%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.22),transparent)]" />
       <div className="card relative aspect-[4/3] overflow-hidden rounded-xl p-2">
         <div className="relative size-full overflow-hidden rounded-lg">
           <img src="/showcase/dusk.webp" width="960" height="720" loading="lazy" decoding="async" alt="A dusk mountain photo, shown half in colour and half in sepia" className={img} />
@@ -85,6 +75,6 @@ function Showcase() {
           </li>
         ))}
       </ul>
-    </motion.figure>
+    </figure>
   );
 }

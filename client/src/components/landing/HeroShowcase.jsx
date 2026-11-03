@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { AnimatePresence, m, useInView, useReducedMotion, useScroll, useTransform } from 'motion/react';
 import {
   ArrowClockwiseIcon,
   CheckCircleIcon,
@@ -50,9 +50,9 @@ export function HeroShowcase() {
   return (
     <div ref={ref} aria-hidden="true" className="relative mx-auto w-full max-w-5xl [perspective:1400px]">
       {/* The light the window sits in */}
-      <div className="absolute -inset-x-10 top-10 -bottom-10 -z-10 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.35),transparent)] blur-2xl" />
+      <div className="absolute -inset-x-10 top-10 -bottom-10 -z-10 rounded-[50%] bg-[radial-gradient(closest-side,rgb(255_106_61/0.35),transparent)]" />
 
-      <motion.div style={reduce ? undefined : { rotateX, scale, transformOrigin: 'center top' }} className="card relative overflow-hidden rounded-xl">
+      <m.div style={reduce ? undefined : { rotateX, scale, transformOrigin: 'center top' }} className="card relative overflow-hidden rounded-xl">
         {/* Window chrome */}
         <div className="flex h-11 items-center gap-3 border-b border-white/[0.06] bg-white/[0.02] px-4">
           <div className="flex gap-1.5">
@@ -69,12 +69,12 @@ export function HeroShowcase() {
         <div className="grid md:grid-cols-[1fr_230px]">
           {/* Stage */}
           <div className="relative grid aspect-[4/3] place-items-center overflow-hidden bg-[#0d0c0b] bg-dots md:aspect-auto md:h-[440px]">
-            <motion.div
+            <m.div
               className="relative aspect-square h-[78%] overflow-hidden rounded-md shadow-[0_30px_60px_-20px_rgb(0_0_0/0.9)]"
               animate={{ rotate: f.rotate ?? 0 }}
               transition={spring}
             >
-              <motion.img
+              <m.img
                 src="/showcase/dunes.webp"
                 alt=""
                 width="800"
@@ -84,12 +84,12 @@ export function HeroShowcase() {
                 animate={{ filter: f.filter ?? 'none' }}
                 transition={{ duration: 0.6 }}
               />
-            </motion.div>
+            </m.div>
 
             {/* Crop box (drawn in screen space, after the rotation, like the real editor) */}
             <AnimatePresence>
               {f.crop && (
-                <motion.div
+                <m.div
                   key="crop"
                   initial={{ opacity: 0, scale: 1.08 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -107,17 +107,17 @@ export function HeroShowcase() {
                   ))}
                   <AnimatePresence>
                     {f.wm && (
-                      <motion.span
+                      <m.span
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
                         className="absolute right-2.5 bottom-2 font-display text-[15px] text-white/85 italic drop-shadow"
                       >
                         © ishan
-                      </motion.span>
+                      </m.span>
                     )}
                   </AnimatePresence>
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
@@ -127,7 +127,7 @@ export function HeroShowcase() {
                 <f.icon size={12} weight="bold" />
               </span>
               <AnimatePresence mode="wait">
-                <motion.span
+                <m.span
                   key={f.label}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -136,7 +136,7 @@ export function HeroShowcase() {
                   className="font-mono text-[11px] text-fg"
                 >
                   {f.label}
-                </motion.span>
+                </m.span>
               </AnimatePresence>
             </div>
           </div>
@@ -168,11 +168,11 @@ export function HeroShowcase() {
               <div className="flex items-baseline justify-between font-mono text-[11px]">
                 <span className="text-fg-subtle">Output</span>
                 <span className="text-fg tabular-nums">
-                  <motion.span key={f.size}>{f.size}</motion.span> KB
+                  <m.span key={f.size}>{f.size}</m.span> KB
                 </span>
               </div>
               <div className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
-                <motion.div
+                <m.div
                   className="h-full rounded-full bg-safelight-gradient"
                   animate={{ width: `${(f.size / FRAMES[0].size) * 100}%` }}
                   transition={spring}
@@ -184,7 +184,7 @@ export function HeroShowcase() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Floating proof chips around the window (wide screens) */}
       <div

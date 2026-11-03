@@ -23,14 +23,24 @@
     <meta property="og:image" content="https://darkroom-ishan.vercel.app/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Darkroom's editor: a portrait photo with a sepia filter, a crop and a watermark previewed live" />
+    <meta property="og:image:alt" content="Darkroom: Edit photos in your browser, beside the editor previewing a sepia crop with a watermark" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Loaded without blocking the first paint: the page draws at once in the fallback fonts, then swaps in these
+         (display=swap). A plain stylesheet link would make the browser wait for Google before showing anything. -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

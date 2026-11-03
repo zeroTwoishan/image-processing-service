@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -15,22 +15,38 @@ import { defaultTransform, EXTENSIONS, toApiTransform } from '../lib/transform';
 import { formatBytes, formatDimensions } from '../lib/format';
 import { nudgeSnoozed, readDismissedAt, rememberDismissed } from '../lib/nudge';
 import { Button } from '../components/Button';
-import { CompareSlider } from '../components/CompareSlider';
-import { EditPreview } from '../components/EditPreview';
 import { Notice } from '../components/Notice';
 import { SignupNudge } from '../components/SignupNudge';
-import { TransformPanel } from '../components/TransformPanel';
 import { UploadDropzone } from '../components/UploadDropzone';
 import { Footer } from '../components/Footer';
-import { CtaBand } from '../components/landing/CtaBand';
-import { Features } from '../components/landing/Features';
-import { FilmStrip } from '../components/landing/FilmStrip';
-import { HeroShowcase } from '../components/landing/HeroShowcase';
-import { HowItWorks } from '../components/landing/HowItWorks';
-import { Privacy } from '../components/landing/Privacy';
+import { WhenVisible } from '../components/landing/WhenVisible';
 
 const SITE = 'https://darkroom-ishan.vercel.app';
 const HERO_INPUT = 'hero-photo-input'; // the hero dropzone's file input; the CTA band opens it too
+
+// The editor is only needed once a photo is chosen, so it's a separate file: the landing page loads faster.
+// `prefetchEditor` starts that download as soon as someone shows intent (pointer over, finger on, or keyboard
+// focus in the upload area), so it's usually ready by the time they've picked a photo. Downloading it on page
+// load instead would compete with the first paint.
+let editorRequested = false;
+const prefetchEditor = () => {
+  if (editorRequested) return;
+  editorRequested = true;
+  Promise.all([import('../components/TransformPanel'), import('../components/EditPreview'), import('../components/CompareSlider')]).catch(
+    () => (editorRequested = false), // offline? try again on the next hover
+  );
+};
+const TransformPanel = lazy(() => import('../components/TransformPanel'));
+const EditPreview = lazy(() => import('../components/EditPreview'));
+const CompareSlider = lazy(() => import('../components/CompareSlider'));
+
+// Everything below the hero is its own file too, fetched and built only as the visitor scrolls near it (WhenVisible).
+const HeroShowcase = lazy(() => import('../components/landing/HeroShowcase'));
+const FilmStrip = lazy(() => import('../components/landing/FilmStrip'));
+const Features = lazy(() => import('../components/landing/Features'));
+const HowItWorks = lazy(() => import('../components/landing/HowItWorks'));
+const Privacy = lazy(() => import('../components/landing/Privacy'));
+const CtaBand = lazy(() => import('../components/landing/CtaBand'));
 
 // Opens a blob as an <img> to learn its size. Browsers turn phone photos upright (EXIF) before measuring, like the
 // server's autoOrient, so crop numbers mean the same thing on both sides. The object URL is kept for display.
@@ -200,6 +216,7 @@ export default function TryIt() {
 
       {errors.general && <Notice className="max-lg:hidden">{errors.general}</Notice>}
 
+      <Suspense fallback={<div aria-busy="true" aria-label="Opening the editor" className="shimmer h-[min(68dvh,720px)] min-h-72 rounded-lg" />}>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_var(--container-panel)] lg:items-start lg:gap-10">
         <div className="flex min-w-0 flex-col gap-3 lg:gap-8">
           {result ? (
@@ -265,18 +282,17 @@ export default function TryIt() {
           />
         )}
       </div>
+      </Suspense>
 
       <SignupNudge open={nudge} onDismiss={dismissNudge} />
     </main>
   );
 }
 
-// The words of the hero headline, revealed one by one (motion stagger).
+// The hero's entrance is plain CSS (the `rise` keyframes in index.css), not Motion: it runs on the compositor from
+// the very first frame, before any JavaScript animation code has loaded. Each piece gets its own delay (a stagger).
+const delay = (ms) => ({ animationDelay: `${ms}ms` });
 const HEADLINE = ['Edit', 'photos'];
-const word = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(10px)' },
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
-};
 
 /**
  * The logged-out home page: hero with the upload zone above the fold, a live product shot, then the
@@ -284,6 +300,8 @@ const word = {
  */
 function Landing({ pick, onFile, onReject, onSample }) {
   const { hash } = useLocation();
+  const eager = Boolean(hash); // opened at /#features: build every section now so the jump lands in the right place
+
 
   // Links like /#features from other pages: scroll there once the sections exist.
   useEffect(() => {
@@ -306,55 +324,54 @@ function Landing({ pick, onFile, onReject, onSample }) {
         </div>
 
         <section aria-labelledby="hero-title" className={cx(pageX, 'flex flex-col items-center pt-10 text-center sm:pt-20')}>
-          <motion.a
+          <a
             href="#how"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            style={delay(0)}
             className={cx(
-              'group beam-border inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pr-3 pl-1 text-[12px] text-fg-muted backdrop-blur transition-colors hover:text-fg',
+              'animate-rise',
+              // The light runs round the badge twice, then stops: an endless repaint isn't worth it here.
+              'group beam-border inline-flex items-center gap-2 [&::before]:[animation-iteration-count:2] rounded-full border border-white/10 bg-white/[0.03] py-1 pr-3 pl-1 text-[12px] text-fg-muted backdrop-blur transition-colors hover:text-fg',
               focusRing,
             )}
           >
             <span className="rounded-full bg-safelight/15 px-2 py-0.5 font-mono text-[10px] font-medium tracking-wider text-safelight uppercase">Free</span>
             No account. Nothing stored.
             <ArrowRightIcon size={12} aria-hidden="true" className="transition-transform group-hover:translate-x-0.5" />
-          </motion.a>
+          </a>
 
-          <motion.h1
+          <h1
             id="hero-title"
-            initial="hidden"
-            animate="show"
-            transition={{ staggerChildren: 0.09, delayChildren: 0.1 }}
             className="mt-7 max-w-4xl text-[46px] leading-[0.98] font-semibold tracking-[-0.055em] text-balance text-fg sm:text-[72px] lg:text-[88px]"
           >
-            {HEADLINE.map((w) => (
-              <motion.span key={w} variants={word} className="text-fg-gradient inline-block pr-[0.22em] pb-[0.06em]">
-                {w}
-              </motion.span>
+            {/* The {' '} between words matters: each word is its own inline-block, and without real spaces the
+                heading's text (what screen readers and Google read) would be "Editphotosin your browser." */}
+            {HEADLINE.map((w, i) => (
+              <span key={w}>
+                <span style={delay(80 + i * 90)} className="animate-rise text-fg-gradient inline-block pb-[0.06em]">
+                  {w}
+                </span>{' '}
+              </span>
             ))}
             <br />
-            <motion.span variants={word} className="text-safelight-gradient inline-block pr-[0.08em] pb-[0.1em] font-display font-normal tracking-[-0.03em] italic">
+            <span style={delay(260)} className="animate-rise text-safelight-gradient inline-block pr-[0.08em] pb-[0.1em] font-display font-normal tracking-[-0.03em] italic">
               in your browser.
-            </motion.span>
-          </motion.h1>
+            </span>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          <p
             className="mt-6 max-w-[54ch] text-[16px] leading-relaxed text-fg-muted text-pretty sm:text-[18px]"
           >
             Rotate, crop, resize, add a filter or a watermark, and convert to JPEG, PNG, WebP or AVIF. Preview everything live,
             press Apply once, download the result.
-          </motion.p>
+          </p>
 
-          <motion.div
+          <div
             id="upload"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-10 flex w-full max-w-2xl flex-col gap-4 text-left"
+            onPointerEnter={prefetchEditor}
+            onTouchStart={prefetchEditor}
+            onFocus={prefetchEditor}
+            style={delay(420)}
+            className="animate-rise mt-10 flex w-full max-w-2xl flex-col gap-4 text-left"
           >
             <UploadDropzone variant="hero" inputId={HERO_INPUT} status={pick.status} file={pick.file} error={pick.error} onFile={onFile} onReject={onReject} />
             <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
@@ -368,25 +385,38 @@ function Landing({ pick, onFile, onReject, onSample }) {
                 </Link>
               </p>
             </div>
-          </motion.div>
+          </div>
         </section>
 
-        <div className={cx(pageX, 'mt-20 sm:mt-28')}>
-          <HeroShowcase />
-        </div>
+        {/* Suspense: while a section's file downloads, its WhenVisible box simply stays empty */}
+        <Suspense fallback={null}>
+          <WhenVisible eager={eager} minHeight={480} margin="0px" className={cx(pageX, 'mt-20 sm:mt-28')}>
+            <HeroShowcase />
+          </WhenVisible>
 
-        <div className="mt-24 overflow-hidden sm:mt-32">
-          <FilmStrip />
-        </div>
+          <WhenVisible eager={eager} minHeight={260} className="mt-24 overflow-hidden sm:mt-32">
+            <FilmStrip />
+          </WhenVisible>
 
-        <div className={cx(pageX, 'flex flex-col gap-28 py-24 sm:gap-40 sm:py-32')}>
-          <Features />
-          <HowItWorks />
-          <Privacy />
-          <CtaBand inputId={HERO_INPUT} />
-        </div>
+          <div className={cx(pageX, 'flex flex-col gap-28 py-24 sm:gap-40 sm:py-32')}>
+            <WhenVisible id="features" eager={eager} minHeight={1200} className="scroll-mt-24">
+              <Features />
+            </WhenVisible>
+            <WhenVisible id="how" eager={eager} minHeight={480} className="scroll-mt-24">
+              <HowItWorks />
+            </WhenVisible>
+            <WhenVisible id="privacy" eager={eager} minHeight={560} className="scroll-mt-24">
+              <Privacy />
+            </WhenVisible>
+            <WhenVisible eager={eager} minHeight={420}>
+              <CtaBand inputId={HERO_INPUT} />
+            </WhenVisible>
+          </div>
+        </Suspense>
       </main>
-      <Footer />
+      <div className="defer-render [contain-intrinsic-size:auto_480px]">
+        <Footer />
+      </div>
     </>
   );
 }
@@ -399,7 +429,7 @@ function Result({ result, original, onDownload, onKeepEditing }) {
   const saved = original.file.size ? Math.round((1 - result.size / original.file.size) * 100) : 0;
 
   return (
-    <motion.section
+    <m.section
       aria-labelledby="result-heading"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -426,7 +456,7 @@ function Result({ result, original, onDownload, onKeepEditing }) {
             <span className="text-safelight">−{saved}%</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-            <motion.div
+            <m.div
               className="h-full rounded-full bg-safelight-gradient"
               initial={{ width: '100%' }}
               animate={{ width: `${100 - saved}%` }}
@@ -446,6 +476,6 @@ function Result({ result, original, onDownload, onKeepEditing }) {
           Keep editing
         </Button>
       </div>
-    </motion.section>
+    </m.section>
   );
 }

@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { ClockCountdownIcon, EyeSlashIcon, GaugeIcon, MapPinIcon, ShieldCheckIcon } from '@phosphor-icons/react';
 import { Reveal, SectionHeading } from './Reveal';
 
@@ -33,7 +33,7 @@ function ExifCard() {
             <span className="text-fg-subtle">{k}</span>
             <span className="relative text-fg-muted">
               {v}
-              <motion.span
+              <m.span
                 aria-hidden="true"
                 className="absolute top-1/2 left-0 h-px w-full origin-left bg-danger/80"
                 initial={{ scaleX: 0 }}
@@ -58,7 +58,7 @@ function ExifCard() {
 /** Privacy, told with a "metadata receipt" whose private fields get struck out as it scrolls in. */
 export function Privacy() {
   return (
-    <section id="privacy" aria-labelledby="privacy-title" className="grid scroll-mt-24 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+    <section aria-labelledby="privacy-title" className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
       <div className="flex flex-col gap-10">
         <SectionHeading
           id="privacy-title"

@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { motion, useInView } from 'motion/react';
+import { m, useInView } from 'motion/react';
 import {
   ArrowClockwiseIcon,
   ArrowsOutSimpleIcon,
@@ -50,7 +50,7 @@ function CropVisual() {
   return (
     <div aria-hidden="true" className="relative h-64 overflow-hidden sm:h-80">
       <img src="/showcase/peak.webp" alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
-      <motion.div
+      <m.div
         className="absolute rounded-[3px] border border-white shadow-[0_0_0_9999px_rgb(11_10_9/0.6)]"
         initial={{ left: '8%', top: '10%', width: '84%', height: '80%' }}
         whileInView={{ left: ['8%', '26%', '18%'], top: ['10%', '14%', '8%'], width: ['84%', '44%', '58%'], height: ['80%', '70%', '78%'] }}
@@ -66,7 +66,7 @@ function CropVisual() {
           <span key={p} className={cx('absolute size-2.5 rounded-[2px] bg-white', p)} />
         ))}
         <span className="absolute -top-7 left-0 rounded-sm bg-black/70 px-1.5 py-0.5 font-mono text-[10px] text-fg">drag me</span>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -85,7 +85,7 @@ function RotateVisual() {
             {d}°
           </span>
         ))}
-        <motion.img
+        <m.img
           src="/showcase/sunrise.webp"
           alt=""
           loading="lazy"
@@ -131,7 +131,7 @@ function ConvertVisual() {
         <div key={fmt} className="grid grid-cols-[44px_1fr_64px] items-center gap-3 font-mono text-[11px]">
           <span className={tone}>{fmt}</span>
           <div className="h-2 overflow-hidden rounded-full bg-white/[0.05]">
-            <motion.div
+            <m.div
               className={cx('h-full rounded-full', fmt === 'AVIF' ? 'bg-safelight-gradient' : 'bg-white/25')}
               initial={{ width: 0 }}
               animate={inView ? { width: `${(kb / 1840) * 100}%` } : {}}
@@ -149,7 +149,7 @@ function WatermarkVisual() {
   return (
     <div aria-hidden="true" className="relative mx-6 mt-6 h-44 overflow-hidden rounded-md photo-edge md:mb-6 md:h-60">
       <img src="/showcase/dusk.webp" alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
-      <motion.span
+      <m.span
         className="absolute right-3 bottom-2.5 overflow-hidden font-display text-xl whitespace-nowrap text-white/90 italic"
         initial={{ width: 0 }}
         whileInView={{ width: 'auto' }}
@@ -157,7 +157,7 @@ function WatermarkVisual() {
         transition={{ duration: 1.2, delay: 0.3, ease: 'easeOut' }}
       >
         © ishan · 2026
-      </motion.span>
+      </m.span>
     </div>
   );
 }
@@ -182,7 +182,7 @@ function ResizeVisual() {
 /** "Everything a photo needs": a bento grid, one tile per edit the server can do. */
 export function Features() {
   return (
-    <section id="features" aria-labelledby="features-title" className="scroll-mt-24">
+    <section aria-labelledby="features-title">
       <SectionHeading
         id="features-title"
         eyebrowText="Six tools, one Apply"

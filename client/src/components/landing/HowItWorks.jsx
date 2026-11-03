@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 import { DownloadSimpleIcon, SlidersHorizontalIcon, UploadSimpleIcon } from '@phosphor-icons/react';
 import { Reveal, SectionHeading } from './Reveal';
 
@@ -26,7 +26,7 @@ const STEPS = [
 /** Three numbered steps joined by a line that draws itself as the section scrolls in. */
 export function HowItWorks() {
   return (
-    <section id="how" aria-labelledby="how-title" className="scroll-mt-24">
+    <section aria-labelledby="how-title">
       <SectionHeading
         id="how-title"
         eyebrowText="How it works"
@@ -38,7 +38,7 @@ export function HowItWorks() {
       />
       <div className="relative mt-16">
         {/* The connecting line (desktop) */}
-        <motion.div
+        <m.div
           aria-hidden="true"
           className="absolute top-7 right-[16%] left-[16%] hidden h-px origin-left bg-gradient-to-r from-safelight/0 via-safelight/70 to-safelight/0 md:block"
           initial={{ scaleX: 0 }}

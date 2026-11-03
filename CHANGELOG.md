@@ -2,6 +2,15 @@
 
 > **History only.** `PLAN.md` is the source of truth. Where anything here conflicts with it, `PLAN.md` wins. Newest entries first.
 
+### 2026-11-03: Performance pass after the redesign
+
+| # | Section | Change |
+| --- | --- | --- |
+| 1 | Frontend | Lighthouse (mobile, production build, 3 runs) on `/`: 74 after the redesign → 92–95, level with the old design. `/login` and `/register` 94–96. Accessibility 100 everywhere |
+| 2 | Frontend | Code splitting: gallery, photo page and 404 load on first visit; the guest editor loads when someone hovers or touches the upload area; landing sections below the hero load as they scroll near (`WhenVisible`). Main bundle 188 → 122 KB gzip (the old design was 123) |
+| 3 | Frontend | Motion uses `LazyMotion` + `m`, with the animation engine in its own file loaded after first paint. Hero and auth entrances are CSS (`animate-rise`), starting dim instead of invisible so Largest Contentful Paint isn't delayed. No more animated `blur()` filters |
+| 4 | Frontend | Google Fonts load without blocking the first paint (preload + swap). The footer's giant decorative wordmark is SVG so contrast checkers skip it |
+
 ### 2026-11-03: UI redesign (Darkroom v2)
 
 | # | Section | Change |
@@ -11,6 +20,9 @@
 | 3 | Frontend | Restyled login/register, gallery, photo page, 404 and loading screen. No logic, routes or API calls changed |
 | 4 | Dependencies | Added `motion` (motion.dev) for scroll reveals and the hero animation. Ishan approved it. `MotionConfig reducedMotion="user"` respects reduced-motion settings |
 | 5 | Assets | `client/public/showcase/*.webp`: the illustrations from `design-reference`, recompressed (about 25 KB each) for the landing page |
+| 6 | Testing | Playwright end-to-end tests (`e2e/`, `npm run test:e2e`): guest edit + download, a user's whole journey, the phone layout and a refused file. They run on their own ports (API 4100, Vite 5174), database and upload folder, and as a third CI job. Vite's proxy target can now be set with `API_PROXY_TARGET` for this. The root `package.json` is now `"type": "module"` |
+| 7 | Frontend | Found by the end-to-end tests: the animated hero headline had no spaces between its words in the page text ("Editphotosin your browser."), which is what Google and some screen readers read. Fixed |
+| 8 | Docs | New README demo (`docs/demo.webp`, an animated WebP: a quarter the size of the old GIF), new screenshots, Mermaid architecture and Apply-request diagrams, and a new link-preview image (`client/public/og.png`) |
 
 ### 2026-10-28: Phase 6 decisions
 

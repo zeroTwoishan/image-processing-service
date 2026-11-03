@@ -1,16 +1,16 @@
-import { motion } from 'motion/react';
+import { m } from 'motion/react';
 
 /**
- * Fades its children up (with a little blur) the first time they scroll into view. Motion's whileInView
+ * Fades its children up the first time they scroll into view. Motion's whileInView
  * uses an IntersectionObserver, so nothing runs while off screen. MotionConfig in main.jsx turns this into
  * an instant change for people who prefer reduced motion.
  */
 export function Reveal({ as = 'div', delay = 0, y = 18, className, children, ...rest }) {
-  const Tag = motion[as];
+  const Tag = m[as];
   return (
     <Tag
-      initial={{ opacity: 0, y, filter: 'blur(6px)' }}
-      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '0px 0px -10% 0px' }}
       transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
