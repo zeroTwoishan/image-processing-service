@@ -56,5 +56,8 @@ test('a new page opens at the top, not where the last page was scrolled to', asy
   await footerLink.click();
 
   await expect(page).toHaveURL(/\/login$/);
-  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  // The URL changes first and React draws the new page a moment later (it renders navigations as a transition),
+  // so wait for the page, then let the scroll check retry briefly instead of reading it once.
+  await expect(page.getByRole('heading', { name: 'Log in', level: 1 })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
