@@ -14,8 +14,17 @@
  */
 @import "tailwindcss";
 
+/* ---- Fonts: self-hosted (public/fonts, see its README). font-display: swap draws text at once in a fallback font,
+   then swaps these in when they arrive, so text is never invisible while fonts download. ---- */
+@font-face { font-family: "Geist"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/geist-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Geist"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/geist-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Geist"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/geist-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/geist-mono-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/geist-mono-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Instrument Serif"; font-style: italic; font-weight: 400; font-display: swap; src: url("/fonts/instrument-serif-latin-400-italic.woff2") format("woff2"); }
+
 @theme {
-  /* ---- Fonts (loaded by one Google Fonts <link> in index.html) ---- */
+  /* ---- Fonts (self-hosted: the @font-face rules above) ---- */
   --font-display: "Instrument Serif", ui-serif, Georgia, serif; /* italic accents, wordmark */
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif; /* all UI text and headlines */
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* every number */

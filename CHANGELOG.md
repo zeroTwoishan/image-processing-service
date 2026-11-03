@@ -10,6 +10,7 @@
 | 2 | Frontend | Code splitting: gallery, photo page and 404 load on first visit; the guest editor loads when someone hovers or touches the upload area; landing sections below the hero load as they scroll near (`WhenVisible`). Main bundle 188 → 122 KB gzip (the old design was 123) |
 | 3 | Frontend | Motion uses `LazyMotion` + `m`, with the animation engine in its own file loaded after first paint. Hero and auth entrances are CSS (`animate-rise`), starting dim instead of invisible so Largest Contentful Paint isn't delayed. No more animated `blur()` filters |
 | 4 | Frontend | Google Fonts load without blocking the first paint (preload + swap). The footer's giant decorative wordmark is SVG so contrast checkers skip it |
+| 5 | Frontend | Fonts are self-hosted (`client/public/fonts`, OFL-licensed, Latin subset), replacing Google Fonts: no requests to fonts.googleapis.com / fonts.gstatic.com, so visitors' browsers never contact Google, and two fewer servers on the critical path. Only the six cuts the UI uses (the unused Geist 700 and upright Instrument Serif dropped); the three above-the-fold files are preloaded. PageSpeed Insights (mobile) before this change: 97 · 100 · 100 · 100 |
 
 ### 2026-11-03: UI redesign (Darkroom v2)
 
