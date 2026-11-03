@@ -89,11 +89,13 @@ export function TransformPanel({
   const [tool, setTool] = useState('rotate'); // phone: the tool on screen
 
   // Phone: a new tool starts from its top. The photo is pinned to the top of the screen and the tool sits right
-  // under it, so scrolling the page to the top shows the photo and the start of the new tool together. Without
+  // under it, so going to the top of the page shows the photo and the start of the new tool together. Without
   // this you stayed scrolled down wherever the last tool had left you.
+  // Instant, not smooth: iPhone Safari treats a tap during a scroll animation as "stop scrolling" and drops it,
+  // so with a smooth scroll the next tool tap needed two taps. The new tool fades in instead (animate-page).
   const selectTool = (key) => {
     setTool(key);
-    if (window.scrollY > 0) scrollToTop();
+    if (window.scrollY > 0) scrollToTop({ smooth: false });
   };
 
   // A crop the server refused is fixed in the Crop tool, so open it on a phone.
@@ -383,10 +385,11 @@ export function TransformPanel({
       <section aria-label="Edit" className="flex flex-col gap-4">
         {animatedNote}
         <div
+          key={current.key} // a new tool remounts the panel, so its fade-in replays
           role="tabpanel"
           id={`${uid}-panel`}
           aria-labelledby={`${uid}-tab-${current.key}`}
-          className="card flex flex-col gap-3 rounded-lg p-3"
+          className="card flex animate-page flex-col gap-3 rounded-lg p-3"
         >
           <div className="flex items-center justify-between gap-3">
             <h2 className="flex min-w-0 items-baseline gap-2 text-sm font-medium text-fg">

@@ -31,6 +31,10 @@ test('switching tools on a phone scrolls back up to the photo and the new tool',
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
 
   await tools.getByRole('tab', { name: 'Size' }).click();
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0); // smooth scroll lands at the top
+  expect(await page.evaluate(() => window.scrollY)).toBe(0); // instantly: no scroll animation to swallow the next tap
   await expect(page.getByRole('tabpanel')).toContainText('Resize');
+
+  // Tapping straight on to the next tool works first time
+  await tools.getByRole('tab', { name: 'Format' }).click();
+  await expect(page.getByRole('tabpanel')).toContainText('Output');
 });
