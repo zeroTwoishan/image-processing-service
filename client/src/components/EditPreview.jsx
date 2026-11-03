@@ -83,7 +83,7 @@ export function EditPreview({ src, alt, width, height, t, cropping = false, onCr
           )}
 
           {edited && (
-            <span className="pointer-events-none absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 font-mono text-[11px] text-fg backdrop-blur"><span aria-hidden="true" className="size-1.5 rounded-full bg-safelight safelight-glow" />Preview</span>
+            <span className="pointer-events-none absolute top-3 left-3 flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 font-mono text-[11px] text-fg"><span aria-hidden="true" className="size-1.5 rounded-full bg-safelight safelight-glow" />Preview</span>
           )}
         </div>
 

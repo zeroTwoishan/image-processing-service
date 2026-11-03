@@ -61,7 +61,7 @@ export function ImageCard({ image, now = Date.now() }) {
           <span className="rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-canvas">Open →</span>
         </div>
         {image.parent && (
-          <span className="absolute top-2 left-2 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[10px] text-fg backdrop-blur">
+          <span className="absolute top-2 left-2 rounded-full bg-black/55 px-2 py-0.5 font-mono text-[10px] text-fg">
             Version
           </span>
         )}

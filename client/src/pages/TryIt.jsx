@@ -330,7 +330,7 @@ function Landing({ pick, onFile, onReject, onSample }) {
             className={cx(
               'animate-rise',
               // The light runs round the badge twice, then stops: an endless repaint isn't worth it here.
-              'group beam-border inline-flex items-center gap-2 [&::before]:[animation-iteration-count:2] rounded-full border border-white/10 bg-white/[0.03] py-1 pr-3 pl-1 text-[12px] text-fg-muted backdrop-blur transition-colors hover:text-fg',
+              'group beam-border inline-flex items-center gap-2 [&::before]:[animation-iteration-count:2] rounded-full border border-white/10 bg-white/[0.03] py-1 pr-3 pl-1 text-[12px] text-fg-muted transition-colors hover:text-fg',
               focusRing,
             )}
           >
@@ -388,35 +388,30 @@ function Landing({ pick, onFile, onReject, onSample }) {
           </div>
         </section>
 
-        {/* Suspense: while a section's file downloads, its WhenVisible box simply stays empty */}
-        <Suspense fallback={null}>
-          <WhenVisible eager={eager} minHeight={480} margin="0px" className={cx(pageX, 'mt-20 sm:mt-28')}>
+          <WhenVisible eager={eager} margin="0px" reserve="min-h-[313px] sm:min-h-[486px]" className={cx(pageX, 'mt-20 sm:mt-28')}>
             <HeroShowcase />
           </WhenVisible>
 
-          <WhenVisible eager={eager} minHeight={260} className="mt-24 overflow-hidden sm:mt-32">
+          <WhenVisible eager={eager} reserve="min-h-[232px] sm:min-h-[264px]" className="mt-24 overflow-hidden sm:mt-32">
             <FilmStrip />
           </WhenVisible>
 
           <div className={cx(pageX, 'flex flex-col gap-28 py-24 sm:gap-40 sm:py-32')}>
-            <WhenVisible id="features" eager={eager} minHeight={1200} className="scroll-mt-24">
+            <WhenVisible id="features" eager={eager} reserve="min-h-[2320px] md:min-h-[1404px] lg:min-h-[1336px]" className="scroll-mt-24">
               <Features />
             </WhenVisible>
-            <WhenVisible id="how" eager={eager} minHeight={480} className="scroll-mt-24">
+            <WhenVisible id="how" eager={eager} reserve="min-h-[791px] md:min-h-[383px]" className="scroll-mt-24">
               <HowItWorks />
             </WhenVisible>
-            <WhenVisible id="privacy" eager={eager} minHeight={560} className="scroll-mt-24">
+            <WhenVisible id="privacy" eager={eager} reserve="min-h-[1012px] md:min-h-[781px] lg:min-h-[439px]" className="scroll-mt-24">
               <Privacy />
             </WhenVisible>
-            <WhenVisible eager={eager} minHeight={420}>
+            <WhenVisible eager={eager} reserve="min-h-[519px] sm:min-h-[533px]">
               <CtaBand inputId={HERO_INPUT} />
             </WhenVisible>
           </div>
-        </Suspense>
       </main>
-      <div className="defer-render [contain-intrinsic-size:auto_480px]">
-        <Footer />
-      </div>
+      <Footer />
     </>
   );
 }

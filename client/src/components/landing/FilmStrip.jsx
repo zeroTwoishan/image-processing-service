@@ -45,11 +45,14 @@ function Strip({ hidden }) {
 /** Decorative, slightly tilted film strip between the hero and the features. Pauses on hover. */
 export function FilmStrip() {
   return (
-    <div aria-hidden="true" className="relative -rotate-2 py-6 mask-fade-x">
-      <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
+    <div aria-hidden="true" className="relative -rotate-2 py-6">
+      <div className="flex w-max animate-marquee will-change-transform hover:[animation-play-state:paused]">
         <Strip />
         <Strip hidden />
       </div>
+      {/* Edge fades: two gradient strips in the page colour, cheaper than masking the moving strip */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-[12%] bg-gradient-to-r from-canvas to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-[12%] bg-gradient-to-l from-canvas to-transparent" />
     </div>
   );
 }

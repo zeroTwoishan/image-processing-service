@@ -56,13 +56,13 @@ function Showcase() {
           {/* Same file (cached), filtered and clipped to its right half */}
           <img src="/showcase/dusk.webp" width="960" height="720" loading="lazy" decoding="async" alt="" className={`${img} sepia [clip-path:inset(0_0_0_50%)]`} />
           <div aria-hidden="true" className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/80" />
-          <div aria-hidden="true" className="absolute top-1/2 left-1/2 grid size-9 -translate-1/2 place-items-center rounded-full border border-white/60 bg-black/50 font-mono text-[10px] text-white backdrop-blur">
+          <div aria-hidden="true" className="absolute top-1/2 left-1/2 grid size-9 -translate-1/2 place-items-center rounded-full border border-white/60 bg-black/50 font-mono text-[10px] text-white">
             ⇆
           </div>
-          <span aria-hidden="true" className="absolute top-3 left-3 rounded-full bg-black/55 px-2.5 py-1 font-mono text-[11px] text-fg backdrop-blur">
+          <span aria-hidden="true" className="absolute top-3 left-3 rounded-full bg-black/70 px-2.5 py-1 font-mono text-[11px] text-fg">
             Original
           </span>
-          <span aria-hidden="true" className="absolute top-3 right-3 rounded-full bg-black/55 px-2.5 py-1 font-mono text-[11px] text-fg backdrop-blur">
+          <span aria-hidden="true" className="absolute top-3 right-3 rounded-full bg-black/70 px-2.5 py-1 font-mono text-[11px] text-fg">
             v2 · sepia
           </span>
         </div>

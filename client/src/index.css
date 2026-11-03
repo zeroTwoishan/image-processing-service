@@ -181,9 +181,10 @@
 
 /* Frosted chrome for things that float over content: navbar, toasts, bottom bars. */
 @utility glass {
-  background-color: color-mix(in srgb, var(--color-canvas) 72%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
+  /* Mostly opaque with a small blur: a big blur radius is recomputed on every scroll frame. */
+  background-color: color-mix(in srgb, var(--color-canvas) 86%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 /* Fade the left and right edges of a strip (marquees). */
@@ -243,16 +244,11 @@
   body {
     @apply min-h-dvh bg-canvas font-sans text-fg antialiased;
   }
-  /* Film grain over the whole app: an SVG noise tile, blended softly. pointer-events:none so it never blocks. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    pointer-events: none;
-    opacity: 0.045;
-    will-change: transform; /* its own compositor layer: painted once, never repainted on scroll */
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  /* Film grain, baked into the page background: one tile, painted with the page, no extra layer.
+     (It used to be a fixed overlay over everything, which the browser had to blend into every frame while
+     scrolling, and it also put grain on people's photos.) The noise's alpha (0.05) sets its strength. */
+  body {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
   ::selection {
     background: color-mix(in srgb, var(--color-safelight) 35%, transparent);

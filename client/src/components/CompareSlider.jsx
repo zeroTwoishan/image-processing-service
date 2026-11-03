@@ -56,7 +56,7 @@ export function CompareSlider({ beforeSrc, afterSrc, alt, width, height, beforeW
             {/* divider + handle: drawn only; the range input below is the real control */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-y-0" style={{ left: `${pos}%` }}>
               <div className="absolute inset-y-0 -left-px w-px bg-fg/80" />
-              <div className="absolute top-1/2 -left-4.5 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-black/55 text-fg shadow-xl backdrop-blur">
+              <div className="absolute top-1/2 -left-4.5 grid size-9 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-black/55 text-fg shadow-xl">
                 <ArrowsLeftRightIcon size={ICON.sm} />
               </div>
             </div>

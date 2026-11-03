@@ -122,7 +122,7 @@ export function HeroShowcase() {
             </AnimatePresence>
 
             {/* Current step badge */}
-            <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 py-1 pr-3 pl-1.5 backdrop-blur">
+            <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 py-1 pr-3 pl-1.5">
               <span className="grid size-5 place-items-center rounded-full bg-safelight-gradient text-safelight-ink">
                 <f.icon size={12} weight="bold" />
               </span>
@@ -188,14 +188,14 @@ export function HeroShowcase() {
 
       {/* Floating proof chips around the window (wide screens) */}
       <div
-        className="absolute top-24 -left-6 hidden animate-float items-center gap-2 rounded-full border border-white/10 bg-surface/90 py-1.5 pr-3.5 pl-2 shadow-2xl backdrop-blur lg:flex xl:-left-16"
+        className="absolute top-24 -left-6 hidden animate-float items-center gap-2 rounded-full border border-white/10 bg-surface py-1.5 pr-3.5 pl-2 shadow-2xl lg:flex xl:-left-16"
       >
         <ShieldCheckIcon size={18} weight="duotone" className="text-success" />
         <span className="text-[12px] text-fg-muted">
           GPS &amp; camera data <span className="text-fg">stripped</span>
         </span>
       </div>
-      <div className="absolute top-[48%] -right-6 hidden animate-float items-center gap-2 rounded-full border border-white/10 bg-surface/90 py-1.5 pr-3.5 pl-2 shadow-2xl backdrop-blur [animation-delay:-3s] lg:flex xl:-right-14">
+      <div className="absolute top-[48%] -right-6 hidden animate-float items-center gap-2 rounded-full border border-white/10 bg-surface py-1.5 pr-3.5 pl-2 shadow-2xl [animation-delay:-3s] lg:flex xl:-right-14">
         <CheckCircleIcon size={18} weight="duotone" className="text-safelight" />
         <span className="font-mono text-[12px] text-fg tabular-nums">
           {saved > 0 ? `−${saved}%` : '412 KB'} <span className="text-fg-subtle">{saved > 0 ? 'smaller' : 'original'}</span>
